@@ -1,5 +1,36 @@
 # Changelog
 
+## [0.0.3-2026-DEV-2] - 2026-11-19
+
+### Added
+- Added a native Chest Shop module with chest targeting, owner restocking, buyer quantity GUI, per-shop currency pricing, persistent serialized item templates, double-chest alias handling, and player/admin permissions.
+- Added hopper transfer/pickup protection for registered Chest Shops to prevent bypassing the purchase GUI.
+- Added `/donate` with a clickable Saweria support link to the author.
+- Added optional Saweria HTTP Webhook notifications with `Saweria-Callback-Signature` verification, donor/amount broadcasts, request-size limits, and event de-duplication.
+- Added optional Tebex `payment.completed` notifications with raw-body `X-Signature` verification, endpoint validation response, buyer/package/amount broadcasts, and event de-duplication.
+- Added automatic vanilla shop catalogue generation across the default material categories and automatic generation of spawners for supported living entity types.
+- Added `chestshop.yml` and `integrations.yml` defaults with non-destructive configuration merging.
+
+### Changed
+- Updated the Maven artifact version to `0.0.3-2026-DEV-2` and aligned the GitHub Actions artifact name/path.
+- Shortened Shop lore labels, prices, currency IDs, and discount text to reduce tooltip width.
+- Shortened Auction House listing lore to seller, compact price/currency, remaining time, and inspect action.
+- Kept the Auction House inventory title as `Auction House` across all four selectable dimension themes.
+- Enabled the Auction House currency wildcard (`*`) so any currency registered by ExcellentEconomy can be used; exact allowlists remain supported.
+- Updated English and Indonesian documentation with Chest Shop, complete vanilla catalogue behavior, Saweria/Tebex webhook setup, and security requirements.
+
+### Security
+- Webhook callbacks are accepted only after signature verification. The listener binds to localhost by default and must be exposed through an HTTPS reverse proxy.
+- Added webhook payload size limits and persistent event-ID de-duplication to avoid duplicate announcements when providers retry callbacks.
+- Chest Shop inventory automation is blocked for registered shop chests.
+
+### Notes
+- Tebex notifications do not fulfill products, execute commands, or grant ranks. Configure package delivery separately in Tebex or a dedicated fulfillment integration.
+- Saweria and Tebex integrations remain disabled until explicitly enabled and configured with their respective secrets.
+- The built-in Chest Shop is an original implementation inspired by QuickShop-Hikari's concept; it does not depend on or import QuickShop-Hikari code/API, and it does not import existing QuickShop data.
+- MMOItems items remain explicitly configured by type and ID; the runtime hook does not enumerate third-party custom item registries.
+- Full Maven compilation and live Paper testing still need to be executed in GitHub Actions or a local environment with dependencies available.
+
 ## [0.0.3-2026-DEV-1] - 2026-11-19
 
 ### Fixed

@@ -1,0 +1,81 @@
+category:
+  id: spawners
+  display-name: "&cSpawners"
+  icon: SPAWNER
+  slot: 21
+  permission: ""
+items:
+  zombie_spawner:
+    spawner:
+      entity: ZOMBIE
+      smart: true
+    buy-price: 25000.0
+    sell-price: -1
+    currency: vault
+  skeleton_spawner:
+    spawner:
+      entity: SKELETON
+    buy-price: 25000.0
+    sell-price: -1
+  creeper_spawner:
+    spawner:
+      entity: CREEPER
+    buy-price: 30000.0
+    sell-price: -1
+  spider_spawner:
+    spawner:
+      entity: SPIDER
+    buy-price: 22000.0
+    sell-price: -1
+  cave_spider_spawner:
+    spawner:
+      entity: CAVE_SPIDER
+    buy-price: 28000.0
+    sell-price: -1
+  enderman_spawner:
+    spawner:
+      entity: ENDERMAN
+    buy-price: 50000.0
+    sell-price: -1
+  blaze_spawner:
+    spawner:
+      entity: BLAZE
+    buy-price: 45000.0
+    sell-price: -1
+  cow_spawner:
+    spawner:
+      entity: COW
+    buy-price: 15000.0
+    sell-price: -1
+  pig_spawner:
+    spawner:
+      entity: PIG
+    buy-price: 13000.0
+    sell-price: -1
+  sheep_spawner:
+    spawner:
+      entity: SHEEP
+    buy-price: 14000.0
+    sell-price: -1
+  chicken_spawner:
+    spawner:
+      entity: CHICKEN
+    buy-price: 12000.0
+    sell-price: -1
+  slime_spawner:
+    spawner:
+      entity: SLIME
+    buy-price: 35000.0
+    sell-price: -1
+  witch_spawner:
+    spawner:
+      entity: WITCH
+    buy-price: 38000.0
+    sell-price: -1
+
+# Generate spawners for every supported living EntityType; explicit entries below override these.
+auto-include-entities: true
+auto-pricing:
+  buy-base: 1000.0
+  sell-ratio: 0.25
+  currency: vault

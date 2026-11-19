@@ -6,7 +6,7 @@
 
     <groupId>dev.alvran</groupId>
     <artifactId>OctaEconomy</artifactId>
-    <version>0.0.3-2026-DEV-1</version>
+    <version>0.0.3-2026-DEV-2</version>
     <packaging>jar</packaging>
 
     <name>OctaEconomy</name>
@@ -44,6 +44,13 @@
             <groupId>com.github.MilkBowl</groupId>
             <artifactId>VaultAPI</artifactId>
             <version>${vault.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <!-- Used by the webhook JSON parser; Paper supplies Gson at runtime. -->
+        <dependency>
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
+            <version>2.11.0</version>
             <scope>provided</scope>
         </dependency>
     </dependencies>

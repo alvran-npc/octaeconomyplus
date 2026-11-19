@@ -1,0 +1,24 @@
+category:
+  id: misc
+  display-name: "&bMiscellaneous"
+  icon: CHEST
+  slot: 15
+  permission: ""
+  auto-include-vanilla: true
+  auto-pricing:
+    buy-base: 14.0
+    sell-ratio: 0.22
+    currency: vault
+items:
+  iron_ingot:
+    material: IRON_INGOT
+    buy-price: 35.0
+    sell-price: 9.0
+  gold_ingot:
+    material: GOLD_INGOT
+    buy-price: 50.0
+    sell-price: 12.0
+  diamond:
+    material: DIAMOND
+    buy-price: 250.0
+    sell-price: 60.0

@@ -2,13 +2,14 @@
 
 **Plugin ekonomi serba ada dengan Shop GUI berkategori, Sell GUI, dan Auction House multi-currency. Terintegrasi penuh dengan Vault dan EssentialsX.**
 
-Author: **Alvran** · [GitHub](https://github.com/alvran-npc) · Versi: `0.0.3-2026-DEV-1`
+Author: **Alvran** · [GitHub](https://github.com/alvran-npc) · Versi: `0.0.3-2026-DEV-2`
 
 OctaEconomy adalah proyek plugin Paper orisinal. Plugin ini menyediakan toko yang dapat dikonfigurasi, penjualan item dari inventory, dan rumah lelang berbasis database tanpa memerlukan plugin shop atau auction lain.
 
 ## Fitur
 
 - Menu toko berkategori yang dimuat dari satu file YAML untuk setiap kategori.
+- Katalog vanilla lengkap yang dibuat otomatis: seluruh `Material` Paper reguler yang dapat menjadi item ditempatkan ke kategori vanilla yang sesuai; material teknis difilter dan spawner dibuat untuk tipe entitas hidup yang didukung. Entry YAML eksplisit akan mengungguli harga/item otomatis.
 - Menu kategori berpaginasi dengan susunan trapesium dari tengah berpola 3-5-7-9-9, aksen kaca dekoratif, pencarian item, pemilih jumlah, pembelian stack dengan shift-click, dan aksi klik kiri/kanan yang dapat dikonfigurasi.
 - Harga beli dan jual per item, pemilihan mata uang per item, serta template item vanilla, MMOItems, dan spawner.
 - Sell GUI dengan pengembalian item yang tidak dapat dijual.
@@ -16,7 +17,9 @@ OctaEconomy adalah proyek plugin Paper orisinal. Plugin ini menyediakan toko yan
 - Harga dinamis dan batas jual item harian opsional (keduanya nonaktif secara default).
 - Listing Auction House disimpan menggunakan SQLite secara default, dengan dukungan konfigurasi MySQL/MariaDB.
 - Listing lelang multi-currency dengan tema visual Nether, Overworld, Ocean, dan The End, biaya listing, pajak, batas listing, kedaluwarsa, pembatalan, pencarian, dan menu konfirmasi.
-- Diskon shop musiman dari `discounts.yml`, dengan rentang tanggal opsional dan filter kategori/item. Harga diskon tampil pada lore dan digunakan dalam transaksi pembelian.
+- Diskon shop musiman dari `discounts.yml`, dengan rentang tanggal opsional dan filter kategori/item. Harga diskon tampil pada lore ringkas dan digunakan dalam transaksi pembelian.
+- Chest Shop bawaan dengan stok item per peti, harga/mata uang yang dapat dipilih, GUI pembeli, restock oleh pemilik, data shop persisten, perlindungan hopper, dan payout melalui Vault atau ExcellentEconomy.
+- Link dukungan Saweria yang dapat diklik melalui `/donate`, serta notifikasi donasi Saweria dan pembelian `payment.completed` Tebex melalui webhook bertanda tangan (opsional).
 - Pengiriman item tertunda dan payout seller tertunda disimpan di database.
 - File pesan English, Indonesian, dan Chinese Simplified dengan fallback ke English.
 - Hook runtime untuk MMOItems, ExcellentEconomy, dan SmartSpawner. Spawner vanilla tetap tersedia sebagai fallback.
@@ -29,6 +32,8 @@ OctaEconomy adalah proyek plugin Paper orisinal. Plugin ini menyediakan toko yan
 | Java | Java 21 |
 | Plugin wajib | Vault dan EssentialsX (nama plugin `Essentials`) |
 | Plugin opsional | MMOItems, ExcellentEconomy, SmartSpawner |
+| Chest Shop | Bawaan; tidak membutuhkan QuickShop-Hikari |
+| Callback donasi/store | Saweria HTTP Webhook dan Tebex Webhooks (opsional, dikonfigurasi dengan secret) |
 | Ekonomi | Provider ekonomi Vault yang berfungsi, biasanya disediakan oleh EssentialsX |
 | Database | Driver JDBC SQLite bawaan Paper untuk mode SQLite; konektor MySQL dimuat oleh Paper ketika mode MySQL digunakan |
 
@@ -38,8 +43,8 @@ Proyek dikompilasi terhadap Paper API `1.21.4-R0.1-SNAPSHOT`. Source sengaja men
 
 1. Pasang Java 21 dan server Paper 1.21.x yang didukung.
 2. Pasang dan jalankan Vault serta EssentialsX. Pastikan EssentialsX mendaftarkan provider ekonomi melalui Vault.
-3. Salin `OctaEconomy-0.0.3-2026-DEV-1.jar` ke direktori `plugins/` server.
-4. Jalankan server sekali. OctaEconomy membuat konfigurasi default, file bahasa, file kategori toko, dan direktori database lelang ketika database diinisialisasi.
+3. Salin `OctaEconomy-0.0.3-2026-DEV-2.jar` ke direktori `plugins/` server.
+4. Jalankan server sekali. OctaEconomy membuat konfigurasi default, file bahasa, file kategori toko, pengaturan Chest Shop, pengaturan webhook, dan direktori database lelang ketika database diinisialisasi.
 5. Sesuaikan `plugins/OctaEconomy/config.yml`, `auction.yml`, `gui.yml`, `discounts.yml`, dan file di dalam folder `shops/`.
 6. Restart server setelah mengubah detail koneksi database atau pengaturan library Paper. Gunakan `/oeco reload` untuk perubahan konfigurasi biasa, bahasa, dan file shop.
 
@@ -62,6 +67,12 @@ Proyek dikompilasi terhadap Paper API `1.21.4-R0.1-SNAPSHOT`. Source sengaja men
 - `/sell handall` menjual semua stack yang cocok di storage pemain.
 - `/sell inv` menjual semua item sellable yang dikonfigurasi di storage pemain.
 - Multiplier permission menggunakan node seperti `octaeconomy.sell.multiplier.1.5`. Multiplier positif tertinggi yang dimiliki pemain akan dipilih.
+
+### Cakupan katalog default
+
+Delapan kategori vanilla dengan `auto-include-vanilla: true` diisi dari registry `Material` Paper saat startup/reload, bukan hanya dari entry contoh YAML. Semua material reguler yang dapat menjadi item dimasukkan ke kategori yang sesuai; material teknis/khusus Creative difilter. Entry kustom dalam YAML kategori akan menggantikan harga otomatis untuk material tersebut. Kategori Spawners juga membuat entry untuk `EntityType` hidup yang didukung. Kategori MMOItems opsional tetap perlu diisi menggunakan pasangan `type` + `id` pada `shops/mmoitems.yml`; registry item pihak ketiga tidak dienumerasi otomatis pada versi ini.
+
+Harga otomatis adalah harga awal dari bagian `auto-pricing` setiap kategori. Tambahkan material secara eksplisit ke YAML kategori untuk menentukan harga/mata uang khusus, atau ubah `auto-pricing.buy-base`, `sell-ratio`, dan `currency` untuk item yang dibuat otomatis.
 
 ### Menambahkan item ke kategori toko
 
@@ -103,11 +114,20 @@ Kategori akan ditemukan dari file YAML. `id` harus unik dan menggunakan huruf ke
 
 1. Pasang dan jalankan ExcellentEconomy.
 2. Cari ID mata uang persis seperti yang dikonfigurasi di ExcellentEconomy.
-3. Tambahkan ID tersebut ke `settings.allowed-currencies` di `auction.yml` agar dapat digunakan di Auction House.
+3. Secara default, `settings.allowed-currencies` sudah berisi `"*"`, sehingga semua mata uang yang terdaftar di ExcellentEconomy langsung diizinkan. Jika wildcard dihapus untuk membuat allowlist ketat, tambahkan ID mata uang yang tepat pada bagian tersebut.
 4. Gunakan ID yang sama sebagai nilai `currency` pada item shop, atau berikan pada `/ah sell <price> <currency>`.
 5. Muat ulang plugin. Hook akan mencari API ExcellentEconomy melalui service registry Bukkit saat runtime.
 
 API tersebut menyediakan operasi pemain yang menggunakan cache untuk saldo, deposit, dan withdraw. Payout ExcellentEconomy untuk seller offline tetap tertunda hingga pemain masuk; provider Vault dapat mendukung deposit offline secara langsung.
+
+### Chest Shop
+
+- Pegang item yang ingin dijual, arahkan pandangan ke chest/trapped chest, lalu jalankan `/chestshop create <price> [currency]`.
+- Pemilik chest dapat klik kanan shop chest untuk membuka inventory normal dan melakukan restock dengan item yang cocok. Pemain lain melakukan klik kanan untuk membuka GUI pembelian.
+- Pembeli dapat membeli 1, 16, atau 64 item. Transaksi memeriksa stok, kapasitas inventory, ketersediaan mata uang, dan payout pemilik sebelum selesai.
+- `/chestshop info` menampilkan pemilik, item, harga, mata uang, dan stok saat ini. `/chestshop remove` menghapus pendaftaran shop; isi chest tetap berada di dalam chest.
+- Contoh: `/chestshop create 25 gems` membuat shop dengan harga 25 unit mata uang `gems`. Fitur ini dapat memakai ID mata uang dari provider terdaftar, termasuk ExcellentEconomy. Pemilik shop dengan mata uang ExcellentEconomy harus online saat hasil pembelian dikreditkan; provider Vault dapat mendukung deposit offline.
+- Ini adalah Chest Shop bawaan yang ditulis secara orisinal dengan referensi konseptual QuickShop-Hikari dari pengguna. Kode/API QuickShop-Hikari tidak disalin atau dijadikan dependency; shop yang sudah dibuat oleh QuickShop tidak diimpor.
 
 ### Auction House
 
@@ -138,6 +158,10 @@ Listing disimpan menggunakan `ItemStack#serializeAsBytes`, sehingga metadata ite
 | `/ah search <keyword>` | Mencari listing aktif |
 | `/ah mylistings` | Mengelola listing aktif sendiri |
 | `/ah theme [dimension]` | Membuka pemilih tema atau menerapkan `nether`, `overworld`, `ocean`, atau `the_end` |
+| `/chestshop create <price> [currency]` | Membuat shop pada chest yang ditarget saat memegang item |
+| `/chestshop remove` | Menghapus pendaftaran shop yang ditarget |
+| `/chestshop info` | Melihat stok dan harga shop yang ditarget |
+| `/donate` | Menampilkan tautan dukungan Saweria author |
 | `/octaeconomy reload`, `/oeco reload` | Memuat ulang config, bahasa, dan file shop |
 | `/octaeconomy version` | Menampilkan versi plugin dan author |
 | `/octaeconomy help` | Menampilkan bantuan command |
@@ -158,6 +182,10 @@ Listing disimpan menggunakan `ItemStack#serializeAsBytes`, sehingga metadata ite
 | `octaeconomy.auction.use` | true | Menggunakan Auction House |
 | `octaeconomy.auction.sell` | true | Membuat listing lelang |
 | `octaeconomy.auction.limit.<n>` | false | Mengganti batas listing aktif dasar dengan angka permission tertinggi |
+| `octaeconomy.chestshop.use` | true | Menggunakan command Chest Shop |
+| `octaeconomy.chestshop.create` | true | Membuat Chest Shop |
+| `octaeconomy.chestshop.admin` | op | Menghapus/mengelola Chest Shop siapa pun |
+| `octaeconomy.chestshop.limit.bypass` | op | Melewati batas jumlah Chest Shop per pemain |
 | `octaeconomy.admin` | op | Reload dan debug |
 
 ## Konfigurasi
@@ -221,6 +249,34 @@ Edit `lang/en.yml`, `lang/id.yml`, dan `lang/zh.yml`. Semua key pesan saat ini t
 
 Integrasi opsional ditemukan saat runtime. OctaEconomy tidak membundel, melakukan shade, atau menyalin class dari plugin lain.
 
+### `chestshop.yml`
+
+Mengatur modul Chest Shop bawaan: `enabled`, batas shop per pemain, dan jarak maksimum target chest saat membuat/menghapus shop. Lokasi shop dan template item terserialisasi disimpan pada `chestshops.yml` dan ditulis secara async.
+
+### `integrations.yml` — Notifikasi Saweria dan Tebex
+
+Listener webhook tidak berjalan sampai setidaknya satu integrasi diaktifkan dan secret-nya diisi. Secara default listener bind ke `127.0.0.1:8765`. Pertahankan listener di localhost dan publikasikan melalui reverse proxy HTTPS; jangan mengekspos listener HTTP biasa plugin secara langsung ke internet. Reverse proxy harus mempertahankan raw request body dan header signature.
+
+**Saweria:**
+
+1. Di Saweria, atur URL HTTP Webhook seperti `https://domain-kamu.example/octaeconomy/saweria`.
+2. Atur `webhooks.enabled: true`, `webhooks.saweria.enabled: true`, dan masukkan Streaming Key Saweria ke `webhooks.saweria.streaming-key`.
+3. Arahkan path HTTPS publik ke `http://127.0.0.1:8765/saweria` (atau sesuaikan dengan `webhooks.paths.saweria`).
+4. OctaEconomy memvalidasi `Saweria-Callback-Signature` dan mencegah event ID yang sama diumumkan berulang sebelum menyiarkan nama donatur dan nominal ke pemain online.
+
+HTTP Webhook Saweria mengirim JSON POST dan mendokumentasikan signature sebagai HMAC-SHA256 dari gabungan berurutan field `version`, `id`, `amount_raw`, `donator_name`, dan `donator_email`. Lihat [dokumentasi HTTP Webhook Saweria](https://saweria.co/docs/webhook).
+
+**Tebex:**
+
+1. Di Tebex, buka **Developers → Webhooks → Endpoints**, tambahkan URL callback HTTPS publik, dan pilih event `payment.completed`.
+2. Salin endpoint secret ke `webhooks.tebex.secret` lalu atur `webhooks.tebex.enabled: true`.
+3. Arahkan path publik ke `http://127.0.0.1:8765/tebex` (atau sesuaikan dengan `webhooks.paths.tebex`).
+4. Callback validasi Tebex akan menerima respons JSON `200` berisi `id` sesuai kebutuhan validasi endpoint. Pembayaran selesai akan menyiarkan nama pembeli, maksimal tiga nama paket, dan jumlah pembayaran.
+
+OctaEconomy memverifikasi `X-Signature` Tebex menggunakan raw request body dan endpoint secret. Notifikasi hanya bersifat informasi: pengiriman paket Tebex, command, rank, dan pemenuhan hak akses tetap harus diatur di Tebex atau integrasi fulfillment terpisah. Lihat [dokumentasi Webhook Tebex](https://docs.tebex.io/developers/webhooks/overview).
+
+Template MiniMessage `notifications.saweria` dan `notifications.tebex` dapat diubah. Placeholder yang tersedia mencakup `{donator}`, `{amount}`, `{message}`, `{player}`, `{packages}`, dan `{transaction}`. ID event disimpan di `data/webhook-events.log` agar retry dari penyedia webhook tidak mengulang notifikasi.
+
 ## Catatan performa dan keamanan
 
 - Operasi JDBC Auction dijalankan secara serial pada worker daemon khusus; operasi inventory Bukkit dan pemanggilan event dikembalikan ke server thread.
@@ -249,7 +305,7 @@ Workflow GitHub Actions memasang Maven secara langsung dan tidak bergantung pada
 File output:
 
 ```text
-target/OctaEconomy-0.0.3-2026-DEV-1.jar
+target/OctaEconomy-0.0.3-2026-DEV-2.jar
 ```
 
 Proyek Maven menggunakan scope `provided` untuk Paper API dan Vault API serta tidak melakukan shade dependency. Paper menyediakan driver JDBC SQLite. Saat `database.type: mysql` digunakan, Paper memuat konektor MySQL yang dideklarasikan di `plugin.yml`.
@@ -277,4 +333,5 @@ OctaEconomy **100% gratis**. Penjualan ulang, akses paywall, akses yang mensyara
 - Author asli: **Alvran** — https://github.com/alvran-npc
 - Dibuat untuk ekosistem Paper/Bukkit API dan ekonomi Vault.
 - MMOItems, ExcellentEconomy, dan SmartSpawner merupakan integrasi runtime opsional.
+- QuickShop-Hikari hanya menjadi referensi konseptual chest shop; Chest Shop bawaan ditulis secara orisinal dan independen.
 - Dokumentasi EconomyShopGUI dan AxAuctions hanya dipertimbangkan sebagai inspirasi UX tingkat tinggi. Tidak ada plugin referensi yang menjadi dependency runtime dan tidak ada source code plugin referensi yang disertakan.

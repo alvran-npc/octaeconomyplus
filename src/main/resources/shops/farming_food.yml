@@ -1,0 +1,24 @@
+category:
+  id: farming_food
+  display-name: "&aFarming & Food"
+  icon: WHEAT
+  slot: 14
+  permission: ""
+  auto-include-vanilla: true
+  auto-pricing:
+    buy-base: 7.0
+    sell-ratio: 0.22
+    currency: vault
+items:
+  wheat:
+    material: WHEAT
+    buy-price: 5.0
+    sell-price: 1.0
+  carrot:
+    material: CARROT
+    buy-price: 5.0
+    sell-price: 1.0
+  cooked_beef:
+    material: COOKED_BEEF
+    buy-price: 18.0
+    sell-price: 4.0

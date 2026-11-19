@@ -1,5 +1,36 @@
 # Catatan Perubahan
 
+## [0.0.3-2026-DEV-2] - 2026-11-19
+
+### Ditambahkan
+- Menambahkan modul Chest Shop bawaan dengan target chest, restock oleh pemilik, GUI jumlah pembelian, harga multi-currency per shop, template item terserialisasi yang persisten, dukungan alias double chest, serta permission pemain/admin.
+- Menambahkan perlindungan transfer/pickup hopper pada Chest Shop terdaftar agar stok tidak dapat diambil tanpa GUI pembelian.
+- Menambahkan `/donate` dengan tautan Saweria author yang dapat diklik.
+- Menambahkan notifikasi Saweria HTTP Webhook opsional dengan validasi `Saweria-Callback-Signature`, broadcast nama donatur/nominal, batas ukuran request, dan de-duplikasi event.
+- Menambahkan notifikasi Tebex `payment.completed` opsional dengan validasi `X-Signature` raw body, respons validasi endpoint, broadcast pembeli/nama paket/nominal, dan de-duplikasi event.
+- Menambahkan pembuatan katalog vanilla otomatis pada kategori material default dan pembuatan spawner otomatis untuk tipe entitas hidup yang didukung.
+- Menambahkan default `chestshop.yml` dan `integrations.yml` dengan penggabungan konfigurasi yang tidak menimpa nilai pengguna.
+
+### Diubah
+- Memperbarui versi artifact Maven menjadi `0.0.3-2026-DEV-2` dan menyamakan nama/path artifact GitHub Actions.
+- Memperpendek label lore Shop, harga, ID mata uang, dan teks diskon agar tooltip tidak terlalu lebar.
+- Memperpendek lore listing Auction House menjadi seller, harga/mata uang ringkas, waktu tersisa, dan aksi inspect.
+- Mempertahankan judul inventory Auction House sebagai `Auction House` pada keempat tema dimensi.
+- Mengaktifkan wildcard mata uang Auction House (`*`) agar semua mata uang yang terdaftar di ExcellentEconomy dapat digunakan; allowlist ID eksplisit tetap didukung.
+- Memperbarui dokumentasi English dan Indonesia terkait Chest Shop, cakupan katalog vanilla, setup webhook Saweria/Tebex, dan persyaratan keamanan.
+
+### Keamanan
+- Callback webhook hanya diterima setelah validasi signature. Listener secara default bind ke localhost dan harus dipublikasikan melalui reverse proxy HTTPS.
+- Menambahkan batas ukuran payload webhook dan penyimpanan ID event untuk mencegah notifikasi berulang saat provider melakukan retry.
+- Menonaktifkan otomatisasi inventory hopper untuk chest shop terdaftar.
+
+### Catatan
+- Notifikasi Tebex tidak mengirim produk, menjalankan command, atau memberikan rank. Pengiriman paket tetap harus diatur di Tebex atau integrasi fulfillment khusus.
+- Integrasi Saweria dan Tebex tetap nonaktif sampai diaktifkan dan dikonfigurasi menggunakan secret masing-masing.
+- Chest Shop bawaan merupakan implementasi orisinal yang terinspirasi konsep QuickShop-Hikari; tidak bergantung pada atau mengimpor kode/API QuickShop-Hikari, dan tidak mengimpor data QuickShop yang sudah ada.
+- Item MMOItems tetap dikonfigurasi secara eksplisit menggunakan type dan ID; hook runtime tidak melakukan enumerasi registry item kustom plugin pihak ketiga.
+- Kompilasi Maven penuh dan pengujian Paper langsung tetap harus dijalankan melalui GitHub Actions atau lingkungan lokal yang memiliki dependency.
+
 ## [0.0.3-2026-DEV-1] - 2026-11-19
 
 ### Diperbaiki

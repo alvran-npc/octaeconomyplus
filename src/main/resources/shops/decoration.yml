@@ -1,0 +1,24 @@
+category:
+  id: decoration
+  display-name: "&eDecoration"
+  icon: FLOWER_POT
+  slot: 12
+  permission: ""
+  auto-include-vanilla: true
+  auto-pricing:
+    buy-base: 16.0
+    sell-ratio: 0.25
+    currency: vault
+items:
+  torch:
+    material: TORCH
+    buy-price: 4.0
+    sell-price: 1.0
+  lantern:
+    material: LANTERN
+    buy-price: 20.0
+    sell-price: 5.0
+  bookshelf:
+    material: BOOKSHELF
+    buy-price: 35.0
+    sell-price: 8.0
