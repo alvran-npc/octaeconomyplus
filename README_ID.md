@@ -2,20 +2,21 @@
 
 **Plugin ekonomi serba ada dengan Shop GUI berkategori, Sell GUI, dan Auction House multi-currency. Terintegrasi penuh dengan Vault dan EssentialsX.**
 
-Author: **Alvran** · [GitHub](https://github.com/alvran-npc) · Versi: `0.0.1-SNAPSHOT`
+Author: **Alvran** · [GitHub](https://github.com/alvran-npc) · Versi: `0.0.2-SNAPSHOT`
 
 OctaEconomy adalah proyek plugin Paper orisinal. Plugin ini menyediakan toko yang dapat dikonfigurasi, penjualan item dari inventory, dan rumah lelang berbasis database tanpa memerlukan plugin shop atau auction lain.
 
 ## Fitur
 
 - Menu toko berkategori yang dimuat dari satu file YAML untuk setiap kategori.
-- Menu kategori berpaginasi, pencarian item, pemilih jumlah, pembelian stack dengan shift-click, dan aksi klik kiri/kanan yang dapat dikonfigurasi.
+- Menu kategori berpaginasi dengan susunan trapesium dari tengah berpola 3-5-7-9-9, aksen kaca dekoratif, pencarian item, pemilih jumlah, pembelian stack dengan shift-click, dan aksi klik kiri/kanan yang dapat dikonfigurasi.
 - Harga beli dan jual per item, pemilihan mata uang per item, serta template item vanilla, MMOItems, dan spawner.
 - Sell GUI dengan pengembalian item yang tidak dapat dijual.
 - `/sell hand`, `/sell handall`, dan `/sell inv` dengan multiplier jual berbasis permission dan ringkasan transaksi per mata uang.
 - Harga dinamis dan batas jual item harian opsional (keduanya nonaktif secara default).
 - Listing Auction House disimpan menggunakan SQLite secara default, dengan dukungan konfigurasi MySQL/MariaDB.
-- Listing lelang multi-currency, biaya listing, pajak, batas listing, kedaluwarsa, pembatalan, pencarian, dan menu konfirmasi.
+- Listing lelang multi-currency dengan tema visual Nether, Overworld, Ocean, dan The End, biaya listing, pajak, batas listing, kedaluwarsa, pembatalan, pencarian, dan menu konfirmasi.
+- Diskon shop musiman dari `discounts.yml`, dengan rentang tanggal opsional dan filter kategori/item. Harga diskon tampil pada lore dan digunakan dalam transaksi pembelian.
 - Pengiriman item tertunda dan payout seller tertunda disimpan di database.
 - File pesan English, Indonesian, dan Chinese Simplified dengan fallback ke English.
 - Hook runtime untuk MMOItems, ExcellentEconomy, dan SmartSpawner. Spawner vanilla tetap tersedia sebagai fallback.
@@ -37,9 +38,9 @@ Proyek dikompilasi terhadap Paper API `1.21.4-R0.1-SNAPSHOT`. Source sengaja men
 
 1. Pasang Java 21 dan server Paper 1.21.x yang didukung.
 2. Pasang dan jalankan Vault serta EssentialsX. Pastikan EssentialsX mendaftarkan provider ekonomi melalui Vault.
-3. Salin `OctaEconomy-0.0.1-SNAPSHOT.jar` ke direktori `plugins/` server.
+3. Salin `OctaEconomy-0.0.2-SNAPSHOT.jar` ke direktori `plugins/` server.
 4. Jalankan server sekali. OctaEconomy membuat konfigurasi default, file bahasa, file kategori toko, dan direktori database lelang ketika database diinisialisasi.
-5. Sesuaikan `plugins/OctaEconomy/config.yml`, `auction.yml`, `gui.yml`, dan file di dalam folder `shops/`.
+5. Sesuaikan `plugins/OctaEconomy/config.yml`, `auction.yml`, `gui.yml`, `discounts.yml`, dan file di dalam folder `shops/`.
 6. Restart server setelah mengubah detail koneksi database atau pengaturan library Paper. Gunakan `/oeco reload` untuk perubahan konfigurasi biasa, bahasa, dan file shop.
 
 ## Cara penggunaan
@@ -176,6 +177,31 @@ Listing disimpan menggunakan `ItemStack#serializeAsBytes`, sehingga metadata ite
 
 `config-version` diperiksa saat startup. Key default yang belum ada akan digabungkan ke konfigurasi pengguna tanpa menimpa nilai yang sudah ada.
 
+### `gui.yml`
+
+- `shop.background` dan `shop.accent` mengatur panel dekoratif di sekitar susunan shop berbentuk trapesium dari tengah.
+- `auction.theme` memilih `nether`, `overworld`, `ocean`, atau `the_end`. Setiap tema memiliki title, panel latar, panel aksen, emblem, tagline, dan gaya harga yang dapat diatur pada `auction.themes.<theme>`.
+
+### `discounts.yml`
+
+Aktifkan diskon musiman dengan mengatur `enabled: true` di bagian utama, memilih key pada `active`, lalu mengatur `enabled: true` pada offer tersebut. Contoh:
+
+```yaml
+enabled: true
+active: christmas
+offers:
+  christmas:
+    enabled: true
+    display-name: "<gradient:#ff5454:#65d98b><bold>CHRISTMAS FESTIVAL</bold></gradient>"
+    percent: 25.0
+    starts-at: "2026-12-20T00:00:00"
+    ends-at: "2027-01-05T23:59:59"
+    categories: []
+    items: []
+```
+
+Tanggal menggunakan format ISO local date-time dan zona waktu lokal server. Kosongkan `starts-at` dan `ends-at` untuk offer yang dikontrol manual. List `categories` dan `items` yang kosong berarti diskon berlaku untuk semua item shop. Jika kedua list diisi, item harus cocok dengan kedua filter. Filter item menerima ID item atau format `category-id:item-id`. Diskon hanya memengaruhi harga beli; harga jual tidak berubah. Baris diskon tidak ditampilkan di lore jika tidak ada offer aktif yang cocok. Jalankan `/oeco reload` setelah mengubah file. Batas diskon maksimal 90%.
+
 ### `auction.yml`
 
 Mengatur durasi listing, pajak, biaya listing, rentang harga maksimum, jumlah listing, mata uang yang diizinkan, interval pemeriksaan kedaluwarsa, dan blacklist. Batas harga per mata uang dapat dibuat di `currency-limits.<currency>.minimum` dan `.maximum`.
@@ -205,7 +231,7 @@ Integrasi opsional ditemukan saat runtime. OctaEconomy tidak membundel, melakuka
 - YAML shop dan template item di-cache saat load. Listener GUI langsung berhenti jika inventory bukan milik OctaEconomy.
 - UUID pemain digunakan sebagai identitas pemilik lelang. Perubahan status listing dan pembuatan catatan delivery/payout tertunda di-commit secara atomik.
 - Penghitung jual harian dan pengali harga dinamis berada di memori dan reset setelah restart. Penghitung harian tetap disimpan ketika pemain disconnect selama proses server yang sama.
-- GUI Auction House pada versi awal ini menyediakan pencarian, pengelolaan listing, dan konfirmasi, tetapi filter kategori tingkat lanjut serta pengurutan harga/waktu yang dapat dikonfigurasi belum tersedia. Placeholder lore shop seperti `{buy}`, `{sell}`, `{stock}`, `{category}`, dan `{currency}` juga belum dapat dikonfigurasi.
+- GUI Auction House menyediakan tema dimensi yang dapat dikonfigurasi, pencarian, pengelolaan listing, dan konfirmasi, tetapi filter kategori tingkat lanjut serta pengurutan harga/waktu yang dapat dikonfigurasi belum tersedia. Placeholder lore shop seperti `{buy}`, `{sell}`, `{stock}`, `{category}`, dan `{currency}` juga belum dapat dikonfigurasi.
 - Pembelian menarik saldo pembeli melalui provider ekonomi eksternal sebelum transaksi SQL mengunci listing. Crash proses mendadak pada jeda singkat itu dapat membutuhkan rekonsiliasi manual; transaksi plugin/database tidak dapat meng-commit transaksi Vault eksternal secara atomik.
 - Catatan delivery dan payout baru dihapus setelah operasi inventory/ekonomi eksternal berhasil. Crash proses mendadak di antara deposit Vault atau penambahan item dengan konfirmasi database dapat menyebabkan duplikasi saat recovery; exactly-once tidak dapat dijamin tanpa dukungan idempotensi dari kedua sistem eksternal.
 - Item Sell GUI dikembalikan saat GUI ditutup normal, pemain disconnect, atau plugin dinonaktifkan. Crash OS/proses mendadak ketika GUI masih terbuka dapat terjadi sebelum close event berjalan; versi pertama ini belum dapat dianggap sebagai escrow yang tahan crash.
@@ -214,26 +240,18 @@ Integrasi opsional ditemukan saat runtime. OctaEconomy tidak membundel, melakuka
 
 ## Build dari source
 
-Persyaratan: JDK 21 dan akses jaringan ke Maven repository yang dikonfigurasi. Wrapper Maven yang disertakan akan mengunduh Apache Maven 3.9.9 pada penggunaan pertama jika belum tersedia di cache.
-
-Linux/macOS:
+Persyaratan: JDK 21, Apache Maven 3.8.6 atau lebih baru, dan akses jaringan ke Maven repository yang dikonfigurasi. Jalankan perintah berikut dari root proyek (folder yang berisi `pom.xml`):
 
 ```bash
-./mvnw clean package
+mvn --batch-mode --no-transfer-progress clean package
 ```
 
-Windows:
-
-```bat
-mvnw.cmd clean package
-```
-
-Kamu juga dapat menjalankan `mvn clean package` jika Maven 3.9.9 atau Maven 3.x kompatibel yang lebih baru sudah terpasang.
+Workflow GitHub Actions memasang Maven secara langsung dan tidak bergantung pada keberadaan file Maven Wrapper di root repository. Kamu juga dapat memakai skrip bootstrap `mvnw` secara lokal jika file tersebut tersedia.
 
 File output:
 
 ```text
-target/OctaEconomy-0.0.1-SNAPSHOT.jar
+target/OctaEconomy-0.0.2-SNAPSHOT.jar
 ```
 
 Proyek Maven menggunakan scope `provided` untuk Paper API dan Vault API serta tidak melakukan shade dependency. Paper menyediakan driver JDBC SQLite. Saat `database.type: mysql` digunakan, Paper memuat konektor MySQL yang dideklarasikan di `plugin.yml`.

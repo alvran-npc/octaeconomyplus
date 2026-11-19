@@ -1,0 +1,14 @@
+category:
+  id: spawners
+  display-name: "&cSpawners"
+  icon: SPAWNER
+  slot: 21
+  permission: ""
+items:
+  zombie_spawner:
+    spawner:
+      entity: ZOMBIE
+      smart: true
+    buy-price: 25000.0
+    sell-price: -1
+    currency: vault

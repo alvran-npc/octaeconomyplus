@@ -1,0 +1,59 @@
+name: OctaEconomy
+version: '${project.version}'
+main: dev.alvran.octaeconomy.OctaEconomy
+api-version: '1.20'
+author: Alvran
+description: An all-in-one economy plugin featuring a categorized Shop GUI, Sell GUI, and a multi-currency Auction House. Fully integrated with Vault and EssentialsX.
+website: https://github.com/alvran-npc
+depend: [Vault, Essentials]
+softdepend: [MMOItems, ExcellentEconomy, SmartSpawner]
+libraries:
+  - com.mysql:mysql-connector-j:9.2.0
+commands:
+  shop:
+    description: Open the categorized economy shop.
+    usage: /shop [category|search <keyword>]
+    permission: octaeconomy.shop.use
+  sellgui:
+    description: Open the sell inventory.
+    usage: /sellgui
+    aliases: [sellg]
+    permission: octaeconomy.sell.gui
+  sell:
+    description: Sell held or inventory items.
+    usage: /sell <hand|handall|inv>
+    permission: octaeconomy.sell.use
+  octaeconomy:
+    description: OctaEconomy administration and information.
+    usage: /octaeconomy <reload|version|help|debug>
+    aliases: [oeco]
+  ah:
+    description: Open the multi-currency Auction House.
+    usage: /ah [sell <price> [currency]|expired|collect|search <keyword>|mylistings]
+    aliases: [auction]
+    permission: octaeconomy.auction.use
+permissions:
+  octaeconomy.shop.use:
+    default: true
+  octaeconomy.shop.category.*:
+    default: true
+  octaeconomy.sell.use:
+    default: true
+  octaeconomy.sell.gui:
+    default: true
+  octaeconomy.sell.hand:
+    default: true
+  octaeconomy.sell.handall:
+    default: true
+  octaeconomy.sell.inv:
+    default: true
+  octaeconomy.sell.multiplier.*:
+    default: false
+  octaeconomy.auction.use:
+    default: true
+  octaeconomy.auction.sell:
+    default: true
+  octaeconomy.auction.limit.*:
+    default: false
+  octaeconomy.admin:
+    default: op

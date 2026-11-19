@@ -2,20 +2,21 @@
 
 **An all-in-one economy plugin featuring a categorized Shop GUI, Sell GUI, and a multi-currency Auction House. Fully integrated with Vault and EssentialsX.**
 
-Author: **Alvran** · [GitHub](https://github.com/alvran-npc) · Version: `0.0.1-SNAPSHOT`
+Author: **Alvran** · [GitHub](https://github.com/alvran-npc) · Version: `0.0.2-SNAPSHOT`
 
 OctaEconomy is an original Paper plugin project. It provides a configurable shop, inventory selling, and a database-backed auction house without requiring another shop or auction plugin.
 
 ## Features
 
 - Categorized shop menus loaded from one YAML file per category.
-- Paginated category menus, item search, quantity selector, shift-click stack purchases, and configurable left/right click actions.
+- Paginated category menus with a centered trapezoid layout, decorative glass accents, item search, quantity selector, shift-click stack purchases, and configurable left/right click actions.
 - Buy and sell prices per item, per-item currency selection, and vanilla, MMOItems, and spawner templates.
 - Sell GUI with return handling for items that cannot be sold.
 - `/sell hand`, `/sell handall`, and `/sell inv` with permission-based sell multipliers and grouped summaries.
 - Optional in-memory dynamic prices and daily item sell limits (both disabled by default).
 - Auction listings backed by SQLite by default, with MySQL/MariaDB configuration support.
-- Multi-currency auction listings, listing fee, tax, listing limits, expiration, cancellation, search, and confirmation menu.
+- Multi-currency auction listings with selectable Nether, Overworld, Ocean, and The End visual themes, listing fee, tax, listing limits, expiration, cancellation, search, and confirmation menu.
+- Seasonal shop discounts configured in `discounts.yml`, with optional date windows and category/item targeting. Discounted prices are displayed in shop lore and applied to purchases.
 - Pending item delivery and pending seller payouts retained in the database.
 - English, Indonesian, and Simplified Chinese message files with English fallback.
 - Runtime hooks for MMOItems, ExcellentEconomy, and SmartSpawner. Vanilla spawners remain available as a fallback.
@@ -37,9 +38,9 @@ The project is compiled against Paper API `1.21.4-R0.1-SNAPSHOT`. The source int
 
 1. Install Java 21 and a supported Paper 1.21.x server.
 2. Install and start Vault and EssentialsX. Confirm that EssentialsX registers an economy provider through Vault.
-3. Copy `OctaEconomy-0.0.1-SNAPSHOT.jar` into the server's `plugins/` directory.
+3. Copy `OctaEconomy-0.0.2-SNAPSHOT.jar` into the server's `plugins/` directory.
 4. Start the server once. OctaEconomy creates its default configuration, language files, shop category files, and the auction database directory when the database is initialized.
-5. Edit `plugins/OctaEconomy/config.yml`, `auction.yml`, `gui.yml`, and files under `shops/` as needed.
+5. Edit `plugins/OctaEconomy/config.yml`, `auction.yml`, `gui.yml`, `discounts.yml`, and files under `shops/` as needed.
 6. Restart the server after changing database connection details or Paper library settings. Use `/oeco reload` for ordinary configuration, language, and shop changes.
 
 ## Usage
@@ -176,13 +177,34 @@ Listings are stored with `ItemStack#serializeAsBytes`, preserving Bukkit item me
 
 `config-version` is checked on startup. Missing default keys are merged into the user's existing configuration without replacing existing values.
 
+### `gui.yml`
+
+- `shop.background` and `shop.accent` control the decorative panes surrounding the centered trapezoid shop layout.
+- `auction.theme` selects one of `nether`, `overworld`, `ocean`, or `the_end`. Each theme has configurable title, background pane, accent pane, emblem, tagline, and price styling under `auction.themes.<theme>`.
+
+### `discounts.yml`
+
+Enable a seasonal offer by setting the top-level `enabled: true`, choosing its key in `active`, and setting that offer's `enabled: true`. For example:
+
+```yaml
+enabled: true
+active: christmas
+offers:
+  christmas:
+    enabled: true
+    display-name: "<gradient:#ff5454:#65d98b><bold>CHRISTMAS FESTIVAL</bold></gradient>"
+    percent: 25.0
+    starts-at: "2026-12-20T00:00:00"
+    ends-at: "2027-01-05T23:59:59"
+    categories: []
+    items: []
+```
+
+Dates use ISO local date-time and the server's local timezone. Leave `starts-at` and `ends-at` empty for a manually controlled offer. Empty `categories` and `items` lists apply the offer to every shop item. When both lists are populated, an item must match both filters. Item filters accept either an item ID or `category-id:item-id`. Discounts affect shop buy prices only; sell prices are unchanged. A discount line is omitted from lore when no valid active offer applies. Run `/oeco reload` after editing. The implementation caps configured discounts at 90%.
+
 ### `auction.yml`
 
 Controls listing duration, tax, fee, maximum price range, listing count, allowed currencies, expiration scan interval, and blacklists. Per-currency price bounds can be defined under `currency-limits.<currency>.minimum` and `.maximum`.
-
-### `gui.yml`
-
-Controls the MiniMessage menu titles and row counts. Version 0.0.1 uses six-row menus for the shop, Sell GUI, and Auction House.
 
 ### Language files
 
@@ -206,7 +228,7 @@ Optional integrations are discovered at runtime. OctaEconomy does not bundle, sh
 - Player UUIDs are used for auction ownership. Listing state and pending-delivery/payout creation are committed atomically.
 - Dynamic prices and daily sell counters are in-memory in this initial version; they reset after a restart. Keep them disabled if persistent economic history is required.
 - Daily sell counters and dynamic price multipliers are in-memory and reset on restart. A daily counter is retained across player disconnects during the same server process.
-- The Auction House UI in this initial version provides search, listing management, and confirmation, but advanced category filters and configurable price/time sorting are not implemented yet. Shop lore placeholders such as `{buy}`, `{sell}`, `{stock}`, `{category}`, and `{currency}` are also not configurable in this first release.
+- The Auction House UI provides configurable dimension themes, search, listing management, and confirmation, but advanced category filters and configurable price/time sorting are not implemented yet. Shop lore placeholders such as `{buy}`, `{sell}`, `{stock}`, `{category}`, and `{currency}` are also not configurable in this first release.
 - A purchase withdraws buyer funds through the external economy provider before the SQL transaction reserves the listing. A hard process crash in that short gap can require manual reconciliation; plugin/database transactions cannot atomically commit an external Vault transaction.
 - Delivery and payout records are deleted only after the external inventory/economy operation succeeds. A hard process crash between an external Vault deposit or item insertion and the database acknowledgement can cause a duplicate on recovery; exactly-once delivery across an external plugin and a SQL database cannot be guaranteed without idempotency support from both systems.
 - Sell GUI items are returned on normal close, disconnect, or plugin disable. A sudden operating-system/process crash while the GUI is open can occur before a close event runs; do not treat this first release as crash-proof escrow.
@@ -215,26 +237,18 @@ Optional integrations are discovered at runtime. OctaEconomy does not bundle, sh
 
 ## Build from source
 
-Requirements: JDK 21 and network access to the configured Maven repositories. The included Maven bootstrap wrapper downloads Apache Maven 3.9.9 on first use if it is not already cached.
-
-Linux/macOS:
+Requirements: JDK 21, Apache Maven 3.8.6 or newer, and network access to the configured Maven repositories. Run the following from the project root (the directory containing `pom.xml`):
 
 ```bash
-./mvnw clean package
+mvn --batch-mode --no-transfer-progress clean package
 ```
 
-Windows:
-
-```bat
-mvnw.cmd clean package
-```
-
-You can also run `mvn clean package` when Maven 3.9.9 or a compatible newer Maven 3.x release is already installed.
+The GitHub Actions workflow installs Maven directly and does not depend on a Maven Wrapper file being present at the repository root. You may also use the included `mvnw` bootstrap script locally when it is present.
 
 The output is:
 
 ```text
-target/OctaEconomy-0.0.1-SNAPSHOT.jar
+target/OctaEconomy-0.0.2-SNAPSHOT.jar
 ```
 
 The Maven project uses `provided` scope for Paper API and Vault API and does not shade dependencies. Paper supplies the SQLite JDBC driver. When `database.type: mysql` is selected, Paper resolves the MySQL connector declared in `plugin.yml`.
