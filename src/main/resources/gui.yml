@@ -1,9 +1,0 @@
-shop:
-  title: "<dark_green>OctaEconomy <gray>› <white>Shop"
-  rows: 6
-auction:
-  title: "<gold>Auction House <dark_gray>› <white>Market"
-  rows: 6
-sell:
-  title: "<dark_green>Sell Items <gray>› <white>Place items here"
-  rows: 6
