@@ -1,5 +1,28 @@
 # Changelog
 
+## [0.0.3-2026-DEV-1] - 2026-11-19
+
+### Fixed
+- Removed the duplicate Shop helper method that prevented clean Java compilation.
+- Corrected all three language files so the Auction theme notification is a root-level key.
+- Ensured configured category/item colors are parsed as supplied instead of adding a second color palette.
+- Explicitly removed inherited italic decoration from GUI item display names and lore while preserving existing colors and other formatting.
+- Centered incomplete Shop rows and tightened the symmetric frame around the fixed 3-5-7-9-9 layout.
+
+### Changed
+- Rebuilt the Auction House inventory into a dedicated 7×4 listing grid below a themed dimension masthead, with matching side rails and a separate control footer.
+- Added a visible theme emblem/header to Market, My Listings, and Expired screens.
+- Improved listing, purchase review, own listing, archive, and theme-picker lore with structured headings and distinct symbols.
+- Made the theme picker return to the same Auction House view and page; selecting a theme immediately refreshes that view.
+- Added the theme switch control to Market, My Listings, Expired, and Purchase Confirmation screens; `/ah theme` opens the picker and `/ah theme <dimension>` applies a theme directly.
+- Styled the Shop quantity selector with the same background frame as other Shop menus.
+- Updated the Maven artifact version and GitHub Actions artifact path to `0.0.3-2026-DEV-1`.
+
+### Notes
+- The selected Auction House theme is a per-player session preference. `gui.yml` controls the default theme used when a player joins or reconnects.
+- Full Maven compilation and live Paper testing must still be run in GitHub Actions or a local development environment with dependencies available.
+
+
 All notable changes to OctaEconomy are documented in this file.
 The format follows Keep a Changelog and the project uses Semantic Versioning.
 

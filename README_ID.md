@@ -2,7 +2,7 @@
 
 **Plugin ekonomi serba ada dengan Shop GUI berkategori, Sell GUI, dan Auction House multi-currency. Terintegrasi penuh dengan Vault dan EssentialsX.**
 
-Author: **Alvran** · [GitHub](https://github.com/alvran-npc) · Versi: `0.0.2-SNAPSHOT`
+Author: **Alvran** · [GitHub](https://github.com/alvran-npc) · Versi: `0.0.3-2026-DEV-1`
 
 OctaEconomy adalah proyek plugin Paper orisinal. Plugin ini menyediakan toko yang dapat dikonfigurasi, penjualan item dari inventory, dan rumah lelang berbasis database tanpa memerlukan plugin shop atau auction lain.
 
@@ -38,7 +38,7 @@ Proyek dikompilasi terhadap Paper API `1.21.4-R0.1-SNAPSHOT`. Source sengaja men
 
 1. Pasang Java 21 dan server Paper 1.21.x yang didukung.
 2. Pasang dan jalankan Vault serta EssentialsX. Pastikan EssentialsX mendaftarkan provider ekonomi melalui Vault.
-3. Salin `OctaEconomy-0.0.2-SNAPSHOT.jar` ke direktori `plugins/` server.
+3. Salin `OctaEconomy-0.0.3-2026-DEV-1.jar` ke direktori `plugins/` server.
 4. Jalankan server sekali. OctaEconomy membuat konfigurasi default, file bahasa, file kategori toko, dan direktori database lelang ketika database diinisialisasi.
 5. Sesuaikan `plugins/OctaEconomy/config.yml`, `auction.yml`, `gui.yml`, `discounts.yml`, dan file di dalam folder `shops/`.
 6. Restart server setelah mengubah detail koneksi database atau pengaturan library Paper. Gunakan `/oeco reload` untuk perubahan konfigurasi biasa, bahasa, dan file shop.
@@ -97,7 +97,7 @@ items:
     currency: vault
 ```
 
-Kategori akan ditemukan dari file YAML. `id` harus unik dan menggunakan huruf kecil. Permission khusus kategori dapat diatur melalui `category.permission`.
+Kategori akan ditemukan dari file YAML. `id` harus unik dan menggunakan huruf kecil. Permission khusus kategori dapat diatur melalui `category.permission`. Nilai `category.slot` hanya mengatur urutan kategori; OctaEconomy tetap menempatkan kategori pada layout trapesium simetris dan tidak memakai nilai tersebut sebagai slot inventory mentah.
 
 ### Menambahkan mata uang ExcellentEconomy
 
@@ -137,6 +137,7 @@ Listing disimpan menggunakan `ItemStack#serializeAsBytes`, sehingga metadata ite
 | `/ah collect` | Mengambil item lelang tertunda |
 | `/ah search <keyword>` | Mencari listing aktif |
 | `/ah mylistings` | Mengelola listing aktif sendiri |
+| `/ah theme [dimension]` | Membuka pemilih tema atau menerapkan `nether`, `overworld`, `ocean`, atau `the_end` |
 | `/octaeconomy reload`, `/oeco reload` | Memuat ulang config, bahasa, dan file shop |
 | `/octaeconomy version` | Menampilkan versi plugin dan author |
 | `/octaeconomy help` | Menampilkan bantuan command |
@@ -179,8 +180,9 @@ Listing disimpan menggunakan `ItemStack#serializeAsBytes`, sehingga metadata ite
 
 ### `gui.yml`
 
-- `shop.background` dan `shop.accent` mengatur panel dekoratif di sekitar susunan shop berbentuk trapesium dari tengah.
-- `auction.theme` memilih `nether`, `overworld`, `ocean`, atau `the_end`. Setiap tema memiliki title, panel latar, panel aksen, emblem, tagline, dan gaya harga yang dapat diatur pada `auction.themes.<theme>`.
+- `shop.background` dan `shop.accent` mengatur panel di sekitar trapesium simetris 3-5-7-9-9. Baris yang belum penuh diposisikan secara simetris; jumlah item genap diseimbangkan di kiri dan kanan dengan satu slot tengah yang sengaja kosong, bukan menempel ke kiri.
+- `auction.theme` menetapkan tema default: `nether`, `overworld`, `ocean`, atau `the_end`. Pemain dapat menggantinya lewat tombol tema di footer Auction House, atau menggunakan `/ah theme` dan `/ah theme <dimension>`. Tema langsung diterapkan dan berlaku selama sesi pemain; setelah reconnect, plugin menggunakan tema default dari konfigurasi.
+- Setiap tema memiliki `title`, `background`, `accent`, `emblem`, `tagline`, dan `price-style` pada `auction.themes.<theme>`. Warna legacy atau MiniMessage yang sudah ada di nama item/kategori dipertahankan tanpa dibungkus palet warna lain. Lore GUI secara eksplisit tidak italic.
 
 ### `discounts.yml`
 
@@ -205,10 +207,6 @@ Tanggal menggunakan format ISO local date-time dan zona waktu lokal server. Koso
 ### `auction.yml`
 
 Mengatur durasi listing, pajak, biaya listing, rentang harga maksimum, jumlah listing, mata uang yang diizinkan, interval pemeriksaan kedaluwarsa, dan blacklist. Batas harga per mata uang dapat dibuat di `currency-limits.<currency>.minimum` dan `.maximum`.
-
-### `gui.yml`
-
-Mengatur judul menu MiniMessage dan jumlah baris. Versi 0.0.1 memakai menu enam baris untuk Shop, Sell GUI, dan Auction House.
 
 ### File bahasa
 
@@ -251,7 +249,7 @@ Workflow GitHub Actions memasang Maven secara langsung dan tidak bergantung pada
 File output:
 
 ```text
-target/OctaEconomy-0.0.2-SNAPSHOT.jar
+target/OctaEconomy-0.0.3-2026-DEV-1.jar
 ```
 
 Proyek Maven menggunakan scope `provided` untuk Paper API dan Vault API serta tidak melakukan shade dependency. Paper menyediakan driver JDBC SQLite. Saat `database.type: mysql` digunakan, Paper memuat konektor MySQL yang dideklarasikan di `plugin.yml`.

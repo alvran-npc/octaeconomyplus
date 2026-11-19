@@ -2,20 +2,20 @@
 
 **An all-in-one economy plugin featuring a categorized Shop GUI, Sell GUI, and a multi-currency Auction House. Fully integrated with Vault and EssentialsX.**
 
-Author: **Alvran** · [GitHub](https://github.com/alvran-npc) · Version: `0.0.2-SNAPSHOT`
+Author: **Alvran** · [GitHub](https://github.com/alvran-npc) · Version: `0.0.3-2026-DEV-1`
 
 OctaEconomy is an original Paper plugin project. It provides a configurable shop, inventory selling, and a database-backed auction house without requiring another shop or auction plugin.
 
 ## Features
 
 - Categorized shop menus loaded from one YAML file per category.
-- Paginated category menus with a centered trapezoid layout, decorative glass accents, item search, quantity selector, shift-click stack purchases, and configurable left/right click actions.
+- Paginated category menus with a symmetric, centered 3-5-7-9-9 trapezoid layout, balanced glass accents, item search, quantity selector, shift-click stack purchases, and configurable left/right click actions.
 - Buy and sell prices per item, per-item currency selection, and vanilla, MMOItems, and spawner templates.
 - Sell GUI with return handling for items that cannot be sold.
 - `/sell hand`, `/sell handall`, and `/sell inv` with permission-based sell multipliers and grouped summaries.
 - Optional in-memory dynamic prices and daily item sell limits (both disabled by default).
 - Auction listings backed by SQLite by default, with MySQL/MariaDB configuration support.
-- Multi-currency auction listings with selectable Nether, Overworld, Ocean, and The End visual themes, listing fee, tax, listing limits, expiration, cancellation, search, and confirmation menu.
+- Multi-currency auction listings with four live-switchable dimension themes (Nether, Overworld, Ocean, and The End), a dedicated 7×4 listing grid, themed header and side rails, listing fee, tax, listing limits, expiration, cancellation, search, and confirmation menu.
 - Seasonal shop discounts configured in `discounts.yml`, with optional date windows and category/item targeting. Discounted prices are displayed in shop lore and applied to purchases.
 - Pending item delivery and pending seller payouts retained in the database.
 - English, Indonesian, and Simplified Chinese message files with English fallback.
@@ -38,7 +38,7 @@ The project is compiled against Paper API `1.21.4-R0.1-SNAPSHOT`. The source int
 
 1. Install Java 21 and a supported Paper 1.21.x server.
 2. Install and start Vault and EssentialsX. Confirm that EssentialsX registers an economy provider through Vault.
-3. Copy `OctaEconomy-0.0.2-SNAPSHOT.jar` into the server's `plugins/` directory.
+3. Copy `OctaEconomy-0.0.3-2026-DEV-1.jar` into the server's `plugins/` directory.
 4. Start the server once. OctaEconomy creates its default configuration, language files, shop category files, and the auction database directory when the database is initialized.
 5. Edit `plugins/OctaEconomy/config.yml`, `auction.yml`, `gui.yml`, `discounts.yml`, and files under `shops/` as needed.
 6. Restart the server after changing database connection details or Paper library settings. Use `/oeco reload` for ordinary configuration, language, and shop changes.
@@ -97,7 +97,7 @@ items:
     currency: vault
 ```
 
-The category is discovered from the YAML file. The `id` should be unique and lowercase. A category-specific permission may be set in `category.permission`.
+The category is discovered from the YAML file. The `id` should be unique and lowercase. A category-specific permission may be set in `category.permission`. The `category.slot` value controls the category order only; OctaEconomy places categories into its centered trapezoid and does not use that value as a raw inventory slot.
 
 ### Add an ExcellentEconomy currency
 
@@ -137,6 +137,7 @@ Listings are stored with `ItemStack#serializeAsBytes`, preserving Bukkit item me
 | `/ah collect` | Claim pending auction items |
 | `/ah search <keyword>` | Search active listings |
 | `/ah mylistings` | Manage your active listings |
+| `/ah theme [dimension]` | Open the theme picker or apply a dimension theme |
 | `/octaeconomy reload`, `/oeco reload` | Reload config, language, and shop files |
 | `/octaeconomy version` | Show plugin version and author |
 | `/octaeconomy help` | Show command help |
@@ -179,8 +180,9 @@ Listings are stored with `ItemStack#serializeAsBytes`, preserving Bukkit item me
 
 ### `gui.yml`
 
-- `shop.background` and `shop.accent` control the decorative panes surrounding the centered trapezoid shop layout.
-- `auction.theme` selects one of `nether`, `overworld`, `ocean`, or `the_end`. Each theme has configurable title, background pane, accent pane, emblem, tagline, and price styling under `auction.themes.<theme>`.
+- `shop.background` and `shop.accent` control the panes around the symmetric 3-5-7-9-9 trapezoid. Incomplete rows are centered symmetrically; even item counts are mirrored around a deliberate center gap instead of being left-aligned.
+- `auction.theme` sets the default dimension theme: `nether`, `overworld`, `ocean`, or `the_end`. Players can change it from the theme button in the Auction House footer or by using `/ah theme` and `/ah theme <dimension>`. The selected theme applies immediately and remains for that player session; after reconnect, the configured default is used again.
+- Each theme has configurable `title`, `background`, `accent`, `emblem`, `tagline`, and `price-style` values under `auction.themes.<theme>`. Existing legacy or MiniMessage colors in configured item/category names are preserved rather than wrapped in another palette. GUI lore is explicitly non-italic.
 
 ### `discounts.yml`
 
@@ -248,7 +250,7 @@ The GitHub Actions workflow installs Maven directly and does not depend on a Mav
 The output is:
 
 ```text
-target/OctaEconomy-0.0.2-SNAPSHOT.jar
+target/OctaEconomy-0.0.3-2026-DEV-1.jar
 ```
 
 The Maven project uses `provided` scope for Paper API and Vault API and does not shade dependencies. Paper supplies the SQLite JDBC driver. When `database.type: mysql` is selected, Paper resolves the MySQL connector declared in `plugin.yml`.
