@@ -1,0 +1,264 @@
+# OctaEconomy
+
+**Plugin ekonomi serba ada dengan Shop GUI berkategori, Sell GUI, dan Auction House multi-currency. Terintegrasi penuh dengan Vault dan EssentialsX.**
+
+Author: **Alvran** · [GitHub](https://github.com/alvran-npc) · Versi: `0.0.1-SNAPSHOT`
+
+OctaEconomy adalah proyek plugin Paper orisinal. Plugin ini menyediakan toko yang dapat dikonfigurasi, penjualan item dari inventory, dan rumah lelang berbasis database tanpa memerlukan plugin shop atau auction lain.
+
+## Fitur
+
+- Menu toko berkategori yang dimuat dari satu file YAML untuk setiap kategori.
+- Menu kategori berpaginasi, pencarian item, pemilih jumlah, pembelian stack dengan shift-click, dan aksi klik kiri/kanan yang dapat dikonfigurasi.
+- Harga beli dan jual per item, pemilihan mata uang per item, serta template item vanilla, MMOItems, dan spawner.
+- Sell GUI dengan pengembalian item yang tidak dapat dijual.
+- `/sell hand`, `/sell handall`, dan `/sell inv` dengan multiplier jual berbasis permission dan ringkasan transaksi per mata uang.
+- Harga dinamis dan batas jual item harian opsional (keduanya nonaktif secara default).
+- Listing Auction House disimpan menggunakan SQLite secara default, dengan dukungan konfigurasi MySQL/MariaDB.
+- Listing lelang multi-currency, biaya listing, pajak, batas listing, kedaluwarsa, pembatalan, pencarian, dan menu konfirmasi.
+- Pengiriman item tertunda dan payout seller tertunda disimpan di database.
+- File pesan English, Indonesian, dan Chinese Simplified dengan fallback ke English.
+- Hook runtime untuk MMOItems, ExcellentEconomy, dan SmartSpawner. Spawner vanilla tetap tersedia sebagai fallback.
+
+## Persyaratan
+
+| Komponen | Persyaratan |
+|---|---|
+| Server | Paper 1.21.x (plugin memakai deklarasi kompatibilitas Bukkit `api-version: '1.20'`) |
+| Java | Java 21 |
+| Plugin wajib | Vault dan EssentialsX (nama plugin `Essentials`) |
+| Plugin opsional | MMOItems, ExcellentEconomy, SmartSpawner |
+| Ekonomi | Provider ekonomi Vault yang berfungsi, biasanya disediakan oleh EssentialsX |
+| Database | Driver JDBC SQLite bawaan Paper untuk mode SQLite; konektor MySQL dimuat oleh Paper ketika mode MySQL digunakan |
+
+Proyek dikompilasi terhadap Paper API `1.21.4-R0.1-SNAPSHOT`. Source sengaja menghindari kode NMS yang bergantung pada versi tertentu.
+
+## Instalasi
+
+1. Pasang Java 21 dan server Paper 1.21.x yang didukung.
+2. Pasang dan jalankan Vault serta EssentialsX. Pastikan EssentialsX mendaftarkan provider ekonomi melalui Vault.
+3. Salin `OctaEconomy-0.0.1-SNAPSHOT.jar` ke direktori `plugins/` server.
+4. Jalankan server sekali. OctaEconomy membuat konfigurasi default, file bahasa, file kategori toko, dan direktori database lelang ketika database diinisialisasi.
+5. Sesuaikan `plugins/OctaEconomy/config.yml`, `auction.yml`, `gui.yml`, dan file di dalam folder `shops/`.
+6. Restart server setelah mengubah detail koneksi database atau pengaturan library Paper. Gunakan `/oeco reload` untuk perubahan konfigurasi biasa, bahasa, dan file shop.
+
+## Cara penggunaan
+
+### Shop
+
+- `/shop` membuka menu kategori.
+- `/shop blocks` membuka kategori `blocks` secara langsung.
+- `/shop search diamond` menampilkan item toko yang cocok.
+- Klik item untuk membuka pemilih jumlah. Pemilih menyediakan 1, 16, 32, 64, serta kontrol plus/minus untuk jumlah khusus.
+- Shift-left-click membeli satu stack berjumlah 64. Right-click menjual satu item yang cocok dari storage pemain saat aksi klik kanan disetel ke `sell`.
+- Pembelian ditolak jika ruang inventory tidak cukup. Plugin menarik uang sebelum memberikan item dan melakukan refund jika penambahan item gagal secara tidak terduga.
+
+### Sell GUI dan perintah jual
+
+- `/sellgui` atau `/sellg` membuka inventory penjualan.
+- Masukkan item ke GUI lalu tutup. Item yang dapat dijual akan dibayar ke mata uang terkait. Item yang tidak dapat dijual dikembalikan ke inventory pemain atau di-drop dengan aman di lokasi pemain jika inventory penuh.
+- `/sell hand` menjual stack di main hand.
+- `/sell handall` menjual semua stack yang cocok di storage pemain.
+- `/sell inv` menjual semua item sellable yang dikonfigurasi di storage pemain.
+- Multiplier permission menggunakan node seperti `octaeconomy.sell.multiplier.1.5`. Multiplier positif tertinggi yang dimiliki pemain akan dipilih.
+
+### Menambahkan item ke kategori toko
+
+Buka `plugins/OctaEconomy/shops/blocks.yml`, lalu tambahkan entry di bawah `items`:
+
+```yaml
+items:
+  andesite:
+    material: ANDESITE
+    buy-price: 7.0
+    sell-price: 1.5
+    currency: vault
+```
+
+Gunakan `-1` atau hilangkan harga untuk menonaktifkan jenis transaksi tersebut. Muat ulang dengan `/oeco reload`.
+
+### Menambahkan kategori baru
+
+Buat file YAML baru di `plugins/OctaEconomy/shops/`, misalnya `ores.yml`:
+
+```yaml
+category:
+  id: ores
+  display-name: "&bOres"
+  icon: DIAMOND_ORE
+  slot: 22
+  permission: ""
+items:
+  diamond_ore:
+    material: DIAMOND_ORE
+    buy-price: 500.0
+    sell-price: 100.0
+    currency: vault
+```
+
+Kategori akan ditemukan dari file YAML. `id` harus unik dan menggunakan huruf kecil. Permission khusus kategori dapat diatur melalui `category.permission`.
+
+### Menambahkan mata uang ExcellentEconomy
+
+1. Pasang dan jalankan ExcellentEconomy.
+2. Cari ID mata uang persis seperti yang dikonfigurasi di ExcellentEconomy.
+3. Tambahkan ID tersebut ke `settings.allowed-currencies` di `auction.yml` agar dapat digunakan di Auction House.
+4. Gunakan ID yang sama sebagai nilai `currency` pada item shop, atau berikan pada `/ah sell <price> <currency>`.
+5. Muat ulang plugin. Hook akan mencari API ExcellentEconomy melalui service registry Bukkit saat runtime.
+
+API tersebut menyediakan operasi pemain yang menggunakan cache untuk saldo, deposit, dan withdraw. Payout ExcellentEconomy untuk seller offline tetap tertunda hingga pemain masuk; provider Vault dapat mendukung deposit offline secara langsung.
+
+### Auction House
+
+- `/ah` membuka market.
+- `/ah sell 2500` melelang stack di main hand dengan mata uang default.
+- `/ah sell 2500 gems` melelangnya dengan mata uang `gems` yang sudah dikonfigurasi.
+- Klik listing, periksa detailnya, lalu konfirmasi pembelian.
+- `/ah search sword` mencari listing aktif.
+- `/ah mylistings` membuka listing aktif milik seller. Klik salah satu untuk membatalkannya.
+- `/ah expired` menampilkan listing kedaluwarsa. `/ah collect` mengambil item pembelian, item kedaluwarsa, atau item yang listing-nya dibatalkan.
+
+Listing disimpan menggunakan `ItemStack#serializeAsBytes`, sehingga metadata item Bukkit dan metadata dari plugin lain tetap dipertahankan. Status pembelian, pengiriman item ke pembeli, dan catatan payout seller di-commit bersama dalam satu transaksi database. Seller tidak dapat membeli listing miliknya sendiri.
+
+## Commands
+
+| Command | Keterangan |
+|---|---|
+| `/shop [category]` | Membuka shop atau kategori tertentu |
+| `/shop search <keyword>` | Mencari item shop |
+| `/sellgui`, `/sellg` | Membuka Sell GUI |
+| `/sell hand` | Menjual stack di main hand |
+| `/sell handall` | Menjual semua stack sejenis di storage |
+| `/sell inv` | Menjual semua item sellable yang dikonfigurasi |
+| `/ah`, `/auction` | Membuka Auction House |
+| `/ah sell <price> [currency]` | Melelang item di main hand |
+| `/ah expired` | Melihat listing kedaluwarsa |
+| `/ah collect` | Mengambil item lelang tertunda |
+| `/ah search <keyword>` | Mencari listing aktif |
+| `/ah mylistings` | Mengelola listing aktif sendiri |
+| `/octaeconomy reload`, `/oeco reload` | Memuat ulang config, bahasa, dan file shop |
+| `/octaeconomy version` | Menampilkan versi plugin dan author |
+| `/octaeconomy help` | Menampilkan bantuan command |
+| `/octaeconomy debug` | Menampilkan status dasar cache dan database |
+
+## Permissions
+
+| Permission | Default | Fungsi |
+|---|---|---|
+| `octaeconomy.shop.use` | true | Menggunakan shop |
+| `octaeconomy.shop.category.<id>` | true untuk kategori yang ditemukan | Node akses kategori; `category.permission` dapat memberi pembatasan tambahan |
+| `octaeconomy.sell.use` | true | Menggunakan perintah jual |
+| `octaeconomy.sell.gui` | true | Membuka Sell GUI |
+| `octaeconomy.sell.hand` | true | Menggunakan `/sell hand` |
+| `octaeconomy.sell.handall` | true | Menggunakan `/sell handall` |
+| `octaeconomy.sell.inv` | true | Menggunakan `/sell inv` |
+| `octaeconomy.sell.multiplier.<value>` | false | Memberikan multiplier jual, misalnya `.1.5` |
+| `octaeconomy.auction.use` | true | Menggunakan Auction House |
+| `octaeconomy.auction.sell` | true | Membuat listing lelang |
+| `octaeconomy.auction.limit.<n>` | false | Mengganti batas listing aktif dasar dengan angka permission tertinggi |
+| `octaeconomy.admin` | op | Reload dan debug |
+
+## Konfigurasi
+
+### `config.yml`
+
+- `language`: `en`, `id`, atau `zh`.
+- `database.type`: `sqlite` (default) atau `mysql`.
+- `database.sqlite-file`: lokasi SQLite relatif terhadap folder data plugin.
+- `database.mysql`: pengaturan koneksi MySQL.
+- `economy.default-currency`: mata uang yang digunakan jika item shop atau command lelang tidak menyebutkannya.
+- `shop.click-actions`: aksi klik kiri dan kanan (`buy` atau `sell`).
+- `shop.dynamic-price`: batas fluktuasi dan recovery harga opsional; nonaktif secara default.
+- `shop.daily-limit`: jumlah default dan batas jumlah harian per item opsional; nonaktif secara default.
+- `shop.sell-multiplier.enabled`: mengaktifkan multiplier jual berbasis permission.
+- `sound`: suara sukses dan error.
+- `transaction-log.enabled`: mengaktifkan log transaksi harian yang dirotasi. Nonaktif secara default.
+
+`config-version` diperiksa saat startup. Key default yang belum ada akan digabungkan ke konfigurasi pengguna tanpa menimpa nilai yang sudah ada.
+
+### `auction.yml`
+
+Mengatur durasi listing, pajak, biaya listing, rentang harga maksimum, jumlah listing, mata uang yang diizinkan, interval pemeriksaan kedaluwarsa, dan blacklist. Batas harga per mata uang dapat dibuat di `currency-limits.<currency>.minimum` dan `.maximum`.
+
+### `gui.yml`
+
+Mengatur judul menu MiniMessage dan jumlah baris. Versi 0.0.1 memakai menu enam baris untuk Shop, Sell GUI, dan Auction House.
+
+### File bahasa
+
+Edit `lang/en.yml`, `lang/id.yml`, dan `lang/zh.yml`. Semua key pesan saat ini tersedia di ketiga file bahasa. Atur `language: id` untuk Bahasa Indonesia atau `language: zh` untuk Chinese Simplified. Key yang hilang akan menggunakan fallback English.
+
+## Integrasi
+
+- **Vault + EssentialsX:** Wajib. OctaEconomy membaca dan menulis saldo melalui provider ekonomi Vault yang aktif; plugin tidak membuat penyimpanan saldo tandingan.
+- **MMOItems:** Opsional. Definisi item shop dapat memakai `mmoitems.type` dan `mmoitems.id`. Jika plugin atau API tidak tersedia, entry tersebut dilewati dan item vanilla tetap aktif.
+- **ExcellentEconomy:** Opsional. ID mata uang dikonfigurasi melalui API service ExcellentEconomy. Hook dinonaktifkan dengan aman jika plugin/API tidak tersedia.
+- **SmartSpawner:** Opsional. Entry kategori spawner akan mencoba API pembuatan item SmartSpawner terlebih dahulu dan memakai item spawner vanilla sebagai fallback jika hook tidak tersedia.
+
+Integrasi opsional ditemukan saat runtime. OctaEconomy tidak membundel, melakukan shade, atau menyalin class dari plugin lain.
+
+## Catatan performa dan keamanan
+
+- Operasi JDBC Auction dijalankan secara serial pada worker daemon khusus; operasi inventory Bukkit dan pemanggilan event dikembalikan ke server thread.
+- SQLite menggunakan WAL mode, normal synchronous mode, busy timeout, dan index untuk pencarian/status listing.
+- Pemeriksaan expiry berukuran kecil dan dibatasi (maksimal 100 listing per iterasi); tidak melakukan scan seluruh tabel pada main thread.
+- YAML shop dan template item di-cache saat load. Listener GUI langsung berhenti jika inventory bukan milik OctaEconomy.
+- UUID pemain digunakan sebagai identitas pemilik lelang. Perubahan status listing dan pembuatan catatan delivery/payout tertunda di-commit secara atomik.
+- Penghitung jual harian dan pengali harga dinamis berada di memori dan reset setelah restart. Penghitung harian tetap disimpan ketika pemain disconnect selama proses server yang sama.
+- GUI Auction House pada versi awal ini menyediakan pencarian, pengelolaan listing, dan konfirmasi, tetapi filter kategori tingkat lanjut serta pengurutan harga/waktu yang dapat dikonfigurasi belum tersedia. Placeholder lore shop seperti `{buy}`, `{sell}`, `{stock}`, `{category}`, dan `{currency}` juga belum dapat dikonfigurasi.
+- Pembelian menarik saldo pembeli melalui provider ekonomi eksternal sebelum transaksi SQL mengunci listing. Crash proses mendadak pada jeda singkat itu dapat membutuhkan rekonsiliasi manual; transaksi plugin/database tidak dapat meng-commit transaksi Vault eksternal secara atomik.
+- Catatan delivery dan payout baru dihapus setelah operasi inventory/ekonomi eksternal berhasil. Crash proses mendadak di antara deposit Vault atau penambahan item dengan konfirmasi database dapat menyebabkan duplikasi saat recovery; exactly-once tidak dapat dijamin tanpa dukungan idempotensi dari kedua sistem eksternal.
+- Item Sell GUI dikembalikan saat GUI ditutup normal, pemain disconnect, atau plugin dinonaktifkan. Crash OS/proses mendadak ketika GUI masih terbuka dapat terjadi sebelum close event berjalan; versi pertama ini belum dapat dianggap sebagai escrow yang tahan crash.
+- Plugin membaca dan menulis melalui provider ekonomi Vault yang sedang aktif; plugin tidak mendaftarkan provider ekonomi fallback yang dapat berbenturan. Pasang EssentialsX dan pastikan provider Vault-nya aktif.
+- Region scheduler Folia belum dibuat atau diverifikasi. Gunakan Paper standar, bukan Folia, untuk rilis ini.
+
+## Build dari source
+
+Persyaratan: JDK 21 dan akses jaringan ke Maven repository yang dikonfigurasi. Wrapper Maven yang disertakan akan mengunduh Apache Maven 3.9.9 pada penggunaan pertama jika belum tersedia di cache.
+
+Linux/macOS:
+
+```bash
+./mvnw clean package
+```
+
+Windows:
+
+```bat
+mvnw.cmd clean package
+```
+
+Kamu juga dapat menjalankan `mvn clean package` jika Maven 3.9.9 atau Maven 3.x kompatibel yang lebih baru sudah terpasang.
+
+File output:
+
+```text
+target/OctaEconomy-0.0.1-SNAPSHOT.jar
+```
+
+Proyek Maven menggunakan scope `provided` untuk Paper API dan Vault API serta tidak melakukan shade dependency. Paper menyediakan driver JDBC SQLite. Saat `database.type: mysql` digunakan, Paper memuat konektor MySQL yang dideklarasikan di `plugin.yml`.
+
+## FAQ dan troubleshooting
+
+**Auction House menampilkan pesan storage masih dimulai.** Database diinisialisasi secara asynchronous saat startup. Tunggu pesan `Auction storage ready`. Jika inisialisasi gagal, periksa error startup serta direktori SQLite atau kredensial MySQL.
+
+**Item MMOItems tidak muncul di shop.** Pastikan plugin MMOItems aktif dan type serta ID item valid. Entry tidak valid dilewati dengan warning yang menyebut file dan key.
+
+**Mata uang ExcellentEconomy tidak dapat dipilih.** Tambahkan ID mata uang persis ke `auction.yml` dan pastikan ExcellentEconomy telah mendaftarkan API service-nya. Vault tetap menjadi mata uang default.
+
+**MySQL gagal terhubung.** Buat database lebih dahulu, periksa kredensial dan firewall, lalu set `database.type: mysql`. Paper harus dapat memuat library konektor MySQL yang dideklarasikan saat startup.
+
+**Seller offline belum menerima payout ExcellentEconomy.** Operasi cache provider tersebut membutuhkan pemain online. Payout tetap tertunda dan dicoba kembali saat pemain join.
+
+**Server tidak menyala karena Essentials hilang.** EssentialsX adalah dependency wajib pada build ini. Pasang EssentialsX dan Vault sebelum mengaktifkan OctaEconomy.
+
+## Lisensi & Kepemilikan
+
+OctaEconomy **100% gratis**. Penjualan ulang, akses paywall, akses yang mensyaratkan donasi wajib, dan bundling plugin ke produk berbayar dilarang. Fork dan modifikasi harus tetap gratis, tetap mencantumkan kredit **Alvran**, dan tidak boleh mengklaim kepemilikan asli. Satu-satunya author/pemilik asli adalah **Alvran**: https://github.com/alvran-npc. Baca [`LICENSE`](LICENSE) untuk lisensi kustom lengkap.
+
+## Credits
+
+- Author asli: **Alvran** — https://github.com/alvran-npc
+- Dibuat untuk ekosistem Paper/Bukkit API dan ekonomi Vault.
+- MMOItems, ExcellentEconomy, dan SmartSpawner merupakan integrasi runtime opsional.
+- Dokumentasi EconomyShopGUI dan AxAuctions hanya dipertimbangkan sebagai inspirasi UX tingkat tinggi. Tidak ada plugin referensi yang menjadi dependency runtime dan tidak ada source code plugin referensi yang disertakan.
