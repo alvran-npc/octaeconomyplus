@@ -1,3 +1,26 @@
+# Changelog
+
+## [0.0.3-2026-DEV-6] - 2026-11-25
+### Added
+- Premium Shop frame with ornamental amethyst/prismarine corners, double-rule separators, a dedicated title rail, uninterrupted side gutters, and a reserved inner 4x7 category item area.
+- Organized data folder layout for Shop, Auction, Casino, GUI, integrations, player metadata, and SQLite storage.
+- Non-destructive configuration/database migration from DEV-5 paths.
+- Decelerating visual Roulette wheel animation, with the winning result fixed before the animation begins.
+
+### Changed
+- Shop main menu now uses a four-tier centered 3-5-7-7 silhouette beneath a dedicated title rail; the side gutters remain unobstructed and decorative corner ornaments no longer overlap the category cards or footer controls.
+- Shop category pages display 28 items per page to preserve the side gutters and full frame.
+- Moved category files to `shop/`, Shop settings and discounts to `shops/`, Auction configuration to `auctions/`, Casino configuration to `casino/`, and menu configuration to `gui/`.
+- SQLite default path is now `data/database.db`.
+
+### Fixed
+- Roulette animation tasks, active spin state, and daily sell-usage cache are cleaned up to avoid accumulating per-player state.
+- Interrupted Roulette spins are cancelled and refunded on inventory close, player quit, or plugin disable.
+
+### Notes
+- `data/Playerdata.yml` is reserved for future persistent player metadata; 21+ confirmation remains session-only.
+- DiscordSRV and outgoing Discord webhook files are configuration placeholders; inbound Saweria/Tebex webhooks use `integrations/saweria-tebex.yml`.
+
 
 ## [0.0.3-2026-DEV-5] - 2026-11-24
 ### Added

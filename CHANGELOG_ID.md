@@ -1,13 +1,35 @@
+# Changelog
+
+## [0.0.3-2026-DEV-6] - 2026-11-25
+### Ditambahkan
+- Bingkai Shop premium dengan ornamen sudut amethyst/prismarine, garis pemisah ganda, header khusus, rail samping utuh, dan area item kategori 4×7.
+- Struktur folder data baru untuk Shop, Auction, Casino, GUI, integrasi, metadata pemain, dan database SQLite.
+- Migrasi konfigurasi/database DEV-5 ke lokasi baru tanpa menimpa file tujuan yang sudah ada.
+- Animasi roda Roulette yang melambat, dengan hasil ditentukan sebelum animasi dimulai.
+
+### Diubah
+- Halaman kategori Shop menampilkan 28 item per halaman agar rongga samping dan bingkai tetap utuh.
+- File kategori dipindahkan ke `shop/`, pengaturan/diskon ke `shops/`, konfigurasi Auction ke `auctions/`, Casino ke `casino/`, dan GUI ke `gui/`.
+- Lokasi default SQLite menjadi `data/database.db`.
+
+### Diperbaiki
+- Task animasi Roulette, state putaran aktif, dan cache batas jual harian dibersihkan agar state pemain tidak menumpuk.
+- Putaran Roulette yang terputus dibatalkan dan taruhan dikembalikan saat inventory ditutup, pemain disconnect, atau plugin dinonaktifkan.
+
+### Catatan
+- `data/Playerdata.yml` disiapkan untuk metadata pemain persisten di masa depan; konfirmasi 21+ tetap hanya berlaku selama sesi.
+- File DiscordSRV dan outgoing Discord webhook masih berupa placeholder konfigurasi; webhook masuk Saweria/Tebex menggunakan `integrations/saweria-tebex.yml`.
+
 
 ## [0.0.3-2026-DEV-5] - 2026-11-24
 ### Ditambahkan
 - Modul Casino dengan konfirmasi mandiri usia 21+ dan Roulette memakai mata uang virtual Vault saja.
 - Durasi kedaluwarsa listing Auction House yang dapat dipilih dengan permission khusus.
-### Changed
+### Diubah
 - Menghapus command Chest Shop, integrasi modul, dan referensi konfigurasinya dari plugin aktif.
-- Shop category pages now use a square 4x9 item grid and a seven-category navigation rail.
-- Shop category cards show automatic item counts and buy/sell price ranges without internal identifiers.
-- The Shop main menu retains its trapezoid category layout.
+- Halaman kategori Shop menggunakan grid kotak 4x9 dengan rail navigasi tujuh kategori.
+- Kartu kategori Shop menampilkan jumlah item serta rentang harga beli/jual otomatis tanpa identifier internal.
+- Menu utama Shop mempertahankan susunan kategori trapesium.
 
 ## [0.0.3-2026-DEV-4] - 2026-11-19
 ### Diperbaiki

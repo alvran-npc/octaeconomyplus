@@ -6,7 +6,7 @@ MAVEN_VERSION="3.9.9"
 MAVEN_HOME_DIR="${MAVEN_USER_HOME:-${HOME:-.}/.m2}/wrapper/dists/apache-maven-${MAVEN_VERSION}"
 MAVEN_HOME="${MAVEN_HOME_DIR}/apache-maven-${MAVEN_VERSION}"
 MAVEN_BIN="${MAVEN_HOME}/bin/mvn"
-DIST_URL="https://archive.apache.org/dist/maven/maven-3/${MAVEN_VERSION}/binaries/apache-maven-${MAVEN_VERSION}-bin.zip"
+DIST_URL="https://repo.maven.apache.org/maven2/org/apache/maven/apache-maven/3.9.9/apache-maven-3.9.9-bin.zip"
 ZIP_FILE="${MAVEN_HOME_DIR}/apache-maven-${MAVEN_VERSION}-bin.zip"
 
 if [ ! -x "${MAVEN_BIN}" ]; then

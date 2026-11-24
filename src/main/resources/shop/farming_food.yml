@@ -1,0 +1,29 @@
+# The plugin expands this seed file into a complete editable catalogue on first startup/reload.
+category:
+  id: farming_food
+  display-name: "&aFarming & Food"
+  icon: WHEAT
+  slot: 14
+  permission: ""
+  auto-include-vanilla: true
+  # Used only to create missing item entries. Each generated entry is saved below with explicit prices.
+  catalog-defaults:
+    buy-base: 7.00
+    sell-ratio: 0.22
+    currency: vault
+items:
+  wheat:
+    material: WHEAT
+    buy-price: 5.0
+    sell-price: 1.0
+    currency: vault
+  carrot:
+    material: CARROT
+    buy-price: 5.0
+    sell-price: 1.0
+    currency: vault
+  cooked_beef:
+    material: COOKED_BEEF
+    buy-price: 18.0
+    sell-price: 4.0
+    currency: vault

@@ -2,7 +2,7 @@
 
 **Plugin ekonomi serba ada dengan Shop GUI berkategori, Sell GUI, dan Auction House multi-currency. Terintegrasi penuh dengan Vault dan EssentialsX.**
 
-Author: **Alvran** · [GitHub](https://github.com/alvran-npc) · Versi: `0.0.3-2026-DEV-5`
+Author: **Alvran** · [GitHub](https://github.com/alvran-npc) · Versi: `0.0.3-2026-DEV-6`
 
 OctaEconomy adalah proyek plugin Paper orisinal. Plugin ini menyediakan toko yang dapat dikonfigurasi, penjualan item dari inventory, dan rumah lelang berbasis database tanpa memerlukan plugin shop atau auction lain.
 
@@ -10,14 +10,14 @@ OctaEconomy adalah proyek plugin Paper orisinal. Plugin ini menyediakan toko yan
 
 - Menu toko berkategori yang dimuat dari satu file YAML untuk setiap kategori.
 - Katalog vanilla lengkap yang dibuat otomatis: seluruh `Material` Paper reguler yang dapat menjadi item ditempatkan ke kategori vanilla yang sesuai; material teknis difilter dan spawner dibuat untuk tipe entitas hidup yang didukung. Entry YAML eksplisit akan mengungguli harga/item otomatis.
-- Menu kategori berpaginasi dengan susunan trapesium dari tengah berpola 3-5-7-9-9, aksen kaca dekoratif, pencarian item, pemilih jumlah, pembelian stack dengan shift-click, dan aksi klik kiri/kanan yang dapat dikonfigurasi.
+- Menu kategori berpaginasi dengan susunan trapesium dari tengah berpola 3-5-7-7, aksen kaca dekoratif, pencarian item, pemilih jumlah, pembelian stack dengan shift-click, dan aksi klik kiri/kanan yang dapat dikonfigurasi.
 - Harga beli dan jual per item, pemilihan mata uang per item, serta template item vanilla, MMOItems, dan spawner.
 - Sell GUI dengan pengembalian item yang tidak dapat dijual.
 - `/sell hand`, `/sell handall`, dan `/sell inv` dengan multiplier jual berbasis permission dan ringkasan transaksi per mata uang.
 - Harga dinamis dan batas jual item harian opsional (keduanya nonaktif secara default).
 - Listing Auction House disimpan menggunakan SQLite secara default, dengan dukungan konfigurasi MySQL/MariaDB.
 - Listing lelang multi-currency dengan tema visual Nether, Overworld, Ocean, dan The End, biaya listing, pajak, batas listing, kedaluwarsa, pembatalan, pencarian, dan menu konfirmasi.
-- Diskon shop musiman dari `discounts.yml`, dengan rentang tanggal opsional dan filter kategori/item. Harga diskon tampil pada lore ringkas dan digunakan dalam transaksi pembelian.
+- Diskon shop musiman dari `shops/discounts.yml`, dengan rentang tanggal opsional dan filter kategori/item. Harga diskon tampil pada lore ringkas dan digunakan dalam transaksi pembelian.
 |---|---|
 | Server | Paper 1.21.x (plugin memakai deklarasi kompatibilitas Bukkit `api-version: '1.20'`) |
 | Java | Java 21 |
@@ -25,7 +25,7 @@ OctaEconomy adalah proyek plugin Paper orisinal. Plugin ini menyediakan toko yan
 | Plugin opsional | MMOItems, ExcellentEconomy, SmartSpawner |
 1. Pasang Java 21 dan server Paper 1.21.x yang didukung.
 2. Pasang dan jalankan Vault serta EssentialsX. Pastikan EssentialsX mendaftarkan provider ekonomi melalui Vault.
-3. Salin `OctaEconomy-0.0.3-2026-DEV-5.jar` ke direktori `plugins/` server.
+3. Salin `OctaEconomy-0.0.3-2026-DEV-6.jar` ke direktori `plugins/` server.
 - `/shop blocks` membuka kategori `blocks` secara langsung.
 - `/shop search diamond` menampilkan item toko yang cocok.
 - Klik item untuk membuka pemilih jumlah. Pemilih menyediakan 1, 16, 32, 64, serta kontrol plus/minus untuk jumlah khusus.
@@ -43,13 +43,13 @@ OctaEconomy adalah proyek plugin Paper orisinal. Plugin ini menyediakan toko yan
 
 ### Cakupan katalog default
 
-Delapan kategori vanilla dengan `auto-include-vanilla: true` diisi dari registry `Material` Paper saat startup/reload, bukan hanya dari entry contoh YAML. Semua material reguler yang dapat menjadi item dimasukkan ke kategori yang sesuai; material teknis/khusus Creative difilter. Entry kustom dalam YAML kategori akan menggantikan harga otomatis untuk material tersebut. Kategori Spawners juga membuat entry untuk `EntityType` hidup yang didukung. Kategori MMOItems opsional tetap perlu diisi menggunakan pasangan `type` + `id` pada `shops/mmoitems.yml`; registry item pihak ketiga tidak dienumerasi otomatis pada versi ini.
+Delapan kategori vanilla dengan `auto-include-vanilla: true` diisi dari registry `Material` Paper saat startup/reload, bukan hanya dari entry contoh YAML. Semua material reguler yang dapat menjadi item dimasukkan ke kategori yang sesuai; material teknis/khusus Creative difilter. Entry kustom dalam YAML kategori akan menggantikan harga otomatis untuk material tersebut. Kategori Spawners juga membuat entry untuk `EntityType` hidup yang didukung. Kategori MMOItems opsional tetap perlu diisi menggunakan pasangan `type` + `id` pada `shop/mmoitems.yml`; registry item pihak ketiga tidak dienumerasi otomatis pada versi ini.
 
 Harga otomatis adalah harga awal dari bagian `auto-pricing` setiap kategori. Tambahkan material secara eksplisit ke YAML kategori untuk menentukan harga/mata uang khusus, atau ubah `auto-pricing.buy-base`, `sell-ratio`, dan `currency` untuk item yang dibuat otomatis.
 
 ### Menambahkan item ke kategori toko
 
-Buka `plugins/OctaEconomy/shops/blocks.yml`, lalu tambahkan entry di bawah `items`:
+Buka `plugins/OctaEconomy/shop/blocks.yml`, lalu tambahkan entry di bawah `items`:
 
 ```yaml
 items:
@@ -64,7 +64,7 @@ Gunakan `-1` atau hilangkan harga untuk menonaktifkan jenis transaksi tersebut. 
 
 ### Menambahkan kategori baru
 
-Buat file YAML baru di `plugins/OctaEconomy/shops/`, misalnya `ores.yml`:
+Buat file YAML baru di `plugins/OctaEconomy/shop/`, misalnya `ores.yml`:
 
 ```yaml
 category:
@@ -146,7 +146,7 @@ Listing disimpan menggunakan `ItemStack#serializeAsBytes`, sehingga metadata ite
 | `octaeconomy.auction.expire.custom` | op | Mengatur durasi khusus pada `/ah sell` |
 | `octaeconomy.casino.use` | true | Membuka Casino dan menu konfirmasi usia |
 | `octaeconomy.casino.roulette` | true | Bermain Roulette dengan mata uang Vault virtual |
-Pada startup pertama dan setiap `/octaeconomy reload`, OctaEconomy memperluas setiap kategori shop vanilla berdasarkan registry `Material` dari server Paper yang sedang berjalan, lalu menuliskan seluruh daftar ke `plugins/OctaEconomy/shops/*.yml`. Setiap item yang dibuat akan memiliki field eksplisit `material`, `buy-price`, `sell-price`, dan `currency`. Spawner mob yang didukung juga dibuat dengan registry `EntityType`. Entri serta harga manual yang sudah ada tidak ditimpa; plugin hanya menambahkan item atau field yang belum ada. Bagian `catalog-defaults` hanya menentukan harga awal untuk material baru yang ditemukan, bukan harga tersembunyi di memori. Material teknis/admin yang tidak dapat diperoleh secara normal (misalnya command block, barrier, bedrock, dan air) sengaja tidak dimasukkan ke shop publik.
+Pada startup pertama dan setiap `/octaeconomy reload`, OctaEconomy memperluas setiap kategori shop vanilla berdasarkan registry `Material` dari server Paper yang sedang berjalan, lalu menuliskan seluruh daftar ke `plugins/OctaEconomy/shop/*.yml`. Setiap item yang dibuat akan memiliki field eksplisit `material`, `buy-price`, `sell-price`, dan `currency`. Spawner mob yang didukung juga dibuat dengan registry `EntityType`. Entri serta harga manual yang sudah ada tidak ditimpa; plugin hanya menambahkan item atau field yang belum ada. Bagian `catalog-defaults` hanya menentukan harga awal untuk material baru yang ditemukan, bukan harga tersembunyi di memori. Material teknis/admin yang tidak dapat diperoleh secara normal (misalnya command block, barrier, bedrock, dan air) sengaja tidak dimasukkan ke shop publik.
 
 `/sell hand`, `/sell handall`, `/sell inv`, dan SellGUI menggunakan katalog item yang sama, sehingga `sell-price` yang dikonfigurasi berlaku untuk Shop maupun fitur Sell. Spawner secara default hanya dapat dibeli (`sell-price: -1.00`) untuk mencegah penjualan spawner dari item admin.
 
@@ -168,14 +168,45 @@ Pada startup pertama dan setiap `/octaeconomy reload`, OctaEconomy memperluas se
 
 `config-version` diperiksa saat startup. Key default yang belum ada akan digabungkan ke konfigurasi pengguna tanpa menimpa nilai yang sudah ada.
 
-### `gui.yml`
+### Struktur folder data saat runtime
 
-- `shop.background` dan `shop.accent` mengatur panel di sekitar trapesium simetris 3-5-7-9-9. Baris yang belum penuh diposisikan secara simetris; jumlah item genap diseimbangkan di kiri dan kanan dengan satu slot tengah yang sengaja kosong, bukan menempel ke kiri.
-- `shop.category-background` dan `shop.category-accent` mengatur bingkai halaman kategori. Menu utama Shop tetap trapesium 3-5-7-9-9; halaman kategori memakai tujuh tab di slot 1–7, navigasi kelompok di slot 0 dan 8, serta grid item persegi 4x9.
+```text
+plugins/OctaEconomy/
+├── config.yml
+├── data/
+│   ├── Playerdata.yml
+│   └── database.db                 # dibuat SQLite saat startup pertama
+├── lang/                           # en.yml, id.yml, zh.yml
+├── shops/
+│   ├── settings.yml
+│   └── discounts.yml
+├── shop/                           # file kategori: blocks.yml, redstone.yml, dll.
+├── auctions/
+│   ├── auctions.yml
+│   └── theme.yml
+├── casino/
+│   ├── settings.yml
+│   ├── animation/roulette.yml
+│   └── games/roulette.yml
+├── gui/
+│   ├── shop.yml
+│   └── auction.yml
+└── integrations/
+    ├── discordsrv.yml
+    ├── discordwebhook.yml
+    └── saweria-tebex.yml
+```
+
+Plugin membuat `data/database.db` melalui SQLite saat database diinisialisasi; file database biner memang tidak disertakan di dalam JAR source. Dua file YAML Discord disediakan untuk pengaturan integrasi mendatang dan nonaktif secara default. Callback masuk Saweria/Tebex memakai file terpisah `integrations/saweria-tebex.yml`. Saat upgrade dari DEV-5, file lama disalin ke lokasi baru hanya jika file tujuan belum ada; file lama tetap disimpan sebagai salinan pemulihan.
+
+### `gui/shop.yml` and `auctions/theme.yml`
+
+- `shop.background` dan `shop.accent` mengatur panel di sekitar trapesium simetris 3-5-7-7. Baris yang belum penuh diposisikan secara simetris; jumlah item genap diseimbangkan di kiri dan kanan dengan satu slot tengah yang sengaja kosong, bukan menempel ke kiri.
+- `shop.category-background` dan `shop.category-accent` mengatur bingkai halaman kategori. Menu utama Shop tetap trapesium 3-5-7-7; halaman kategori memakai tujuh tab di slot 1–7, navigasi kelompok di slot 0 dan 8, serta grid item persegi 4x7.
 - `auction.theme` menetapkan tema default: `nether`, `overworld`, `ocean`, atau `the_end`. Pemain dapat menggantinya lewat tombol tema di footer Auction House, atau menggunakan `/ah theme` dan `/ah theme <dimension>`. Tema langsung diterapkan dan berlaku selama sesi pemain; setelah reconnect, plugin menggunakan tema default dari konfigurasi.
 - Setiap tema memiliki `title` berwarna sesuai tema tetapi tetap bertuliskan `Auction House`, serta `background`, `accent`, `emblem`, `tagline`, dan `price-style` pada `auction.themes.<theme>`. Warna legacy atau MiniMessage yang sudah ada di nama item/kategori dipertahankan tanpa dibungkus palet warna lain. Lore GUI secara eksplisit tidak italic.
 
-### `discounts.yml`
+### `shops/discounts.yml`
 
 Aktifkan diskon musiman dengan mengatur `enabled: true` di bagian utama, memilih key pada `active`, lalu mengatur `enabled: true` pada offer tersebut. Contoh:
 
@@ -195,11 +226,11 @@ offers:
 
 Tanggal menggunakan format ISO local date-time dan zona waktu lokal server. Kosongkan `starts-at` dan `ends-at` untuk offer yang dikontrol manual. List `categories` dan `items` yang kosong berarti diskon berlaku untuk semua item shop. Jika kedua list diisi, item harus cocok dengan kedua filter. Filter item menerima ID item atau format `category-id:item-id`. Diskon hanya memengaruhi harga beli; harga jual tidak berubah. Baris diskon tidak ditampilkan di lore jika tidak ada offer aktif yang cocok. Jalankan `/oeco reload` setelah mengubah file. Batas diskon maksimal 90%.
 
-### `auction.yml`
+### `auctions/auctions.yml`
 
 Mengatur durasi listing, pajak, biaya listing, rentang harga maksimum, jumlah listing, mata uang yang diizinkan, interval pemeriksaan kedaluwarsa, durasi khusus minimum, dan blacklist. Durasi khusus memerlukan `octaeconomy.auction.expire.custom`. Format yang didukung `30m`, `12h`, `3d`, dan `1w`; default 48 jam dengan maksimum terkonfigurasi 168 jam. Batas harga per mata uang dapat dibuat di `currency-limits.<currency>.minimum` dan `.maximum`.
 
-### `casino.yml`
+### `casino/settings.yml`, `casino/games/roulette.yml`, and `casino/animation/roulette.yml`
 
 Casino hanya menggunakan Vault. Atur `minimum-bet`, `maximum-bet`, tiga nilai `chip-values`, dan pengali profit Roulette. Menu 21+ memperingatkan pemain di bawah umur untuk keluar serta memerlukan pernyataan mandiri per sesi; menu ini bukan verifikasi identitas. Semua nominal memakai saldo virtual server; tidak ada deposit atau penarikan uang nyata.
 
@@ -266,7 +297,7 @@ Workflow GitHub Actions memasang Maven secara langsung dan tidak bergantung pada
 File output:
 
 ```text
-target/OctaEconomy-0.0.3-2026-DEV-5.jar
+target/OctaEconomy-0.0.3-2026-DEV-6.jar
 ```
 
 Proyek Maven menggunakan scope `provided` untuk Paper API dan Vault API serta tidak melakukan shade dependency. Paper menyediakan driver JDBC SQLite. Saat `database.type: mysql` digunakan, Paper memuat konektor MySQL yang dideklarasikan di `plugin.yml`.
@@ -277,7 +308,7 @@ Proyek Maven menggunakan scope `provided` untuk Paper API dan Vault API serta ti
 
 **Item MMOItems tidak muncul di shop.** Pastikan plugin MMOItems aktif dan type serta ID item valid. Entry tidak valid dilewati dengan warning yang menyebut file dan key.
 
-**Mata uang ExcellentEconomy tidak dapat dipilih.** Tambahkan ID mata uang persis ke `auction.yml` dan pastikan ExcellentEconomy telah mendaftarkan API service-nya. Vault tetap menjadi mata uang default.
+**Mata uang ExcellentEconomy tidak dapat dipilih.** Tambahkan ID mata uang persis ke `auctions/auctions.yml` dan pastikan ExcellentEconomy telah mendaftarkan API service-nya. Vault tetap menjadi mata uang default.
 
 **MySQL gagal terhubung.** Buat database lebih dahulu, periksa kredensial dan firewall, lalu set `database.type: mysql`. Paper harus dapat memuat library konektor MySQL yang dideklarasikan saat startup.
 
@@ -296,8 +327,8 @@ OctaEconomy **100% gratis**. Penjualan ulang, akses paywall, akses yang mensyara
 - MMOItems, ExcellentEconomy, dan SmartSpawner merupakan integrasi runtime opsional.
 
 
-## Pembaruan v0.0.3-2026-DEV-5
-- `/ah sell <price> [currency] [expired]` mendukung durasi seperti `12h`, `3d`, dan `1w`. Durasi khusus memerlukan permission `octaeconomy.auction.expire.custom` dan dibatasi konfigurasi `auction.yml`.
-- Menu utama Shop tetap menggunakan kategori trapesium. Halaman kategori memakai tujuh tab kategori di bagian atas, tombol navigasi kategori pada kedua ujung, dan grid item persegi 4x9. Kartu kategori menampilkan jumlah item serta rentang harga beli/jual otomatis.
+## Pembaruan v0.0.3-2026-DEV-6
+- `/ah sell <price> [currency] [expired]` mendukung durasi seperti `12h`, `3d`, dan `1w`. Durasi khusus memerlukan permission `octaeconomy.auction.expire.custom` dan dibatasi konfigurasi `auctions/auctions.yml`.
+- Menu utama Shop memakai siluet terpusat empat tingkat 3-5-7-7 di bawah header khusus, ornamen sudut, rail samping yang utuh, garis pemisah ganda, dan footer tersendiri. Halaman kategori memakai tujuh tab di bagian atas, navigasi kategori pada kedua ujung, serta grid item berbingkai 4x7.
 - Menu `/casino` memiliki gerbang pernyataan mandiri usia 21+. Game pertama adalah Roulette single-zero original yang hanya menggunakan mata uang virtual Vault. Gerbang ini bukan verifikasi identitas/usia; fitur tidak menerima setoran atau pembayaran uang nyata.
-- Pengaturan Casino berada di `casino.yml`; permission: `octaeconomy.casino.use` dan `octaeconomy.casino.roulette`.
+- Pengaturan Casino berada di `casino/settings.yml`, aturan game di `casino/games/roulette.yml`, dan animasi di `casino/animation/roulette.yml`; permission: `octaeconomy.casino.use` dan `octaeconomy.casino.roulette`.

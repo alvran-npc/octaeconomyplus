@@ -1,0 +1,29 @@
+# The plugin expands this seed file into a complete editable catalogue on first startup/reload.
+category:
+  id: misc
+  display-name: "&bMiscellaneous"
+  icon: CHEST
+  slot: 15
+  permission: ""
+  auto-include-vanilla: true
+  # Used only to create missing item entries. Each generated entry is saved below with explicit prices.
+  catalog-defaults:
+    buy-base: 14.00
+    sell-ratio: 0.22
+    currency: vault
+items:
+  iron_ingot:
+    material: IRON_INGOT
+    buy-price: 35.0
+    sell-price: 9.0
+    currency: vault
+  gold_ingot:
+    material: GOLD_INGOT
+    buy-price: 50.0
+    sell-price: 12.0
+    currency: vault
+  diamond:
+    material: DIAMOND
+    buy-price: 250.0
+    sell-price: 60.0
+    currency: vault

@@ -1,0 +1,29 @@
+# The plugin expands this seed file into a complete editable catalogue on first startup/reload.
+category:
+  id: mobs_drop
+  display-name: "&6Mob Drops"
+  icon: BONE
+  slot: 16
+  permission: ""
+  auto-include-vanilla: true
+  # Used only to create missing item entries. Each generated entry is saved below with explicit prices.
+  catalog-defaults:
+    buy-base: 18.00
+    sell-ratio: 0.20
+    currency: vault
+items:
+  rotten_flesh:
+    material: ROTTEN_FLESH
+    buy-price: 4.0
+    sell-price: 0.5
+    currency: vault
+  bone:
+    material: BONE
+    buy-price: 6.0
+    sell-price: 1.0
+    currency: vault
+  string:
+    material: STRING
+    buy-price: 8.0
+    sell-price: 2.0
+    currency: vault
