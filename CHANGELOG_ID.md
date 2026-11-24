@@ -1,3 +1,14 @@
+
+## [0.0.3-2026-DEV-5] - 2026-11-24
+### Ditambahkan
+- Modul Casino dengan konfirmasi mandiri usia 21+ dan Roulette memakai mata uang virtual Vault saja.
+- Durasi kedaluwarsa listing Auction House yang dapat dipilih dengan permission khusus.
+### Changed
+- Menghapus command Chest Shop, integrasi modul, dan referensi konfigurasinya dari plugin aktif.
+- Shop category pages now use a square 4x9 item grid and a seven-category navigation rail.
+- Shop category cards show automatic item counts and buy/sell price ranges without internal identifiers.
+- The Shop main menu retains its trapezoid category layout.
+
 ## [0.0.3-2026-DEV-4] - 2026-11-19
 ### Diperbaiki
 - Katalog Material vanilla lengkap sekarang dituliskan ke file YAML kategori, bukan hanya disimpan di cache runtime.

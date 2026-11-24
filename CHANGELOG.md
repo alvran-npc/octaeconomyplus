@@ -1,3 +1,14 @@
+
+## [0.0.3-2026-DEV-5] - 2026-11-24
+### Added
+- Casino module with a 21+ self-attestation gate and Vault-only virtual-currency Roulette.
+- Custom Auction House listing expiry syntax and permission.
+### Changed
+- Removed the Chest Shop command, module integration, and configuration references from the active plugin.
+- Shop category pages now use a square 4x9 item grid and a seven-category navigation rail.
+- Shop category cards show automatic item counts and buy/sell price ranges without internal identifiers.
+- The Shop main menu retains its trapezoid category layout.
+
 ## [0.0.3-2026-DEV-4] - 2026-11-19
 ### Fixed
 - Materialized the complete vanilla Material catalogue into category YAML files instead of keeping most entries only in the runtime cache.

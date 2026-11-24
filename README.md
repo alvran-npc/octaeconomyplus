@@ -2,7 +2,7 @@
 
 **An all-in-one economy plugin featuring a categorized Shop GUI, Sell GUI, and a multi-currency Auction House. Fully integrated with Vault and EssentialsX.**
 
-Author: **Alvran** · [GitHub](https://github.com/alvran-npc) · Version: `0.0.3-2026-DEV-4`
+Author: **Alvran** · [GitHub](https://github.com/alvran-npc) · Version: `0.0.3-2026-DEV-5`
 
 OctaEconomy is an original Paper plugin project. It provides a configurable shop, inventory selling, and a database-backed auction house without requiring another shop or auction plugin.
 
@@ -18,41 +18,14 @@ OctaEconomy is an original Paper plugin project. It provides a configurable shop
 - Auction listings backed by SQLite by default, with MySQL/MariaDB configuration support.
 - Multi-currency auction listings with four live-switchable dimension themes (Nether, Overworld, Ocean, and The End), a dedicated 7×4 listing grid, themed header and side rails, listing fee, tax, listing limits, expiration, cancellation, search, and confirmation menu.
 - Seasonal shop discounts configured in `discounts.yml`, with optional date windows and category/item targeting. Discounted prices are displayed in compact lore and applied to purchases.
-- Native Chest Shop with per-chest item stock, configurable price/currency, buyer GUI, owner restocking, persistent shop records, hopper protection, and payouts through Vault or ExcellentEconomy.
-- `/donate` clickable Saweria support link plus optional signed Saweria donation and Tebex `payment.completed` in-game notifications.
-- Pending item delivery and pending seller payouts retained in the database.
-- English, Indonesian, and Simplified Chinese message files with English fallback.
-- Runtime hooks for MMOItems, ExcellentEconomy, and SmartSpawner. Vanilla spawners remain available as a fallback.
-
-## Requirements
-
-| Component | Requirement |
 |---|---|
 | Server | Paper 1.21.x (the plugin uses the Bukkit `api-version: '1.20'` compatibility declaration) |
 | Java | Java 21 |
 | Required plugins | Vault and EssentialsX (plugin name `Essentials`) |
 | Optional plugins | MMOItems, ExcellentEconomy, SmartSpawner |
-| Chest Shop | Built-in; does not require QuickShop-Hikari |
-| Donation/store callbacks | Saweria HTTP Webhook and Tebex Webhooks (optional, configured by secrets) |
-| Economy | A working Vault economy provider, normally supplied by EssentialsX |
-| Database | Paper-bundled SQLite JDBC driver for the default SQLite mode; MySQL connector is resolved by Paper when MySQL mode is selected |
-
-The project is compiled against Paper API `1.21.4-R0.1-SNAPSHOT`. The source intentionally avoids version-specific NMS code.
-
-## Installation
-
 1. Install Java 21 and a supported Paper 1.21.x server.
 2. Install and start Vault and EssentialsX. Confirm that EssentialsX registers an economy provider through Vault.
-3. Copy `OctaEconomy-0.0.3-2026-DEV-4.jar` into the server's `plugins/` directory.
-4. Start the server once. OctaEconomy creates its default configuration, language files, shop category files, Chest Shop settings, webhook settings, and the auction database directory when the database is initialized.
-5. Edit `plugins/OctaEconomy/config.yml`, `auction.yml`, `gui.yml`, `discounts.yml`, and files under `shops/` as needed.
-6. Restart the server after changing database connection details or Paper library settings. Use `/oeco reload` for ordinary configuration, language, and shop changes.
-
-## Usage
-
-### Shop
-
-- `/shop` opens the category menu.
+3. Copy `OctaEconomy-0.0.3-2026-DEV-5.jar` into the server's `plugins/` directory.
 - `/shop blocks` opens the `blocks` category directly.
 - `/shop search diamond` opens matching shop entries.
 - Click an item to open its quantity selector. The selector offers 1, 16, 32, 64, and a plus/minus custom quantity control.
@@ -120,20 +93,12 @@ The category is discovered from the YAML file. The `id` should be unique and low
 
 The API exposes cached player operations for balances, deposits, and withdrawals. Offline ExcellentEconomy payouts remain pending until the player joins; Vault providers may support direct offline deposits.
 
-### Chest Shop
-
-- Hold the item you want to sell, look at a chest/trapped chest, then run `/chestshop create <price> [currency]`.
-- The chest owner can right-click the shop chest to open its normal inventory and restock it with matching items. Other players right-click the shop chest to open its purchase GUI.
-- Buyers can purchase 1, 16, or 64 items. The transaction checks stock, inventory capacity, currency availability, and seller payout before completion.
-- `/chestshop info` shows the owner, item, price, currency, and current stock. `/chestshop remove` removes the shop registration; chest contents remain in the chest.
-- Example: `/chestshop create 25 gems` creates a shop priced at 25 units of the `gems` currency. This works with any currency ID provided by a registered provider, including ExcellentEconomy. An ExcellentEconomy shop owner must be online while purchases are credited; Vault providers may support offline deposits.
-- This is an original built-in chest shop inspired by the user-provided QuickShop-Hikari reference. It does not copy or depend on QuickShop-Hikari API/code; existing QuickShop shops are not imported.
-
 ### Auction House
 
 - `/ah` opens the market.
 - `/ah sell 2500` lists the item stack in the main hand using the default currency.
 - `/ah sell 2500 gems` lists it using the configured `gems` currency.
+- `/ah sell 2500 gems 3d` lists it for three days (requires `octaeconomy.auction.expire.custom`); `/ah sell 2500 12h` uses the default currency for twelve hours.
 - Click a listing, review its details, then confirm the purchase.
 - `/ah search sword` searches active listings.
 - `/ah mylistings` opens the seller's active listings. Click one to cancel it.
@@ -152,15 +117,13 @@ Listings are stored with `ItemStack#serializeAsBytes`, preserving Bukkit item me
 | `/sell handall` | Sell all matching stacks in storage |
 | `/sell inv` | Sell all configured sellable items |
 | `/ah`, `/auction` | Open Auction House |
-| `/ah sell <price> [currency]` | List the item in the main hand |
+| `/ah sell <price> [currency] [expired]` | List the item in the main hand; custom durations include `12h`, `3d`, `1w` |
+| `/casino [roulette]` | Open the 21+ gate, casino menu, or Roulette |
 | `/ah expired` | View expired listings |
 | `/ah collect` | Claim pending auction items |
 | `/ah search <keyword>` | Search active listings |
 | `/ah mylistings` | Manage your active listings |
 | `/ah theme [dimension]` | Open the theme picker or apply a dimension theme |
-| `/chestshop create <price> [currency]` | Create a shop at the targeted chest while holding the item |
-| `/chestshop remove` | Remove the targeted shop registration |
-| `/chestshop info` | View targeted shop stock and pricing |
 | `/donate` | Show the author's Saweria support link |
 | `/octaeconomy reload`, `/oeco reload` | Reload config, language, and shop files |
 | `/octaeconomy version` | Show plugin version and author |
@@ -182,15 +145,9 @@ Listings are stored with `ItemStack#serializeAsBytes`, preserving Bukkit item me
 | `octaeconomy.auction.use` | true | Use Auction House |
 | `octaeconomy.auction.sell` | true | Create auction listings |
 | `octaeconomy.auction.limit.<n>` | false | Override the base active listing limit with the highest granted number |
-| `octaeconomy.chestshop.use` | true | Use Chest Shop commands |
-| `octaeconomy.chestshop.create` | true | Create Chest Shops |
-| `octaeconomy.chestshop.admin` | op | Remove/manage any Chest Shop |
-| `octaeconomy.chestshop.limit.bypass` | op | Bypass the per-player Chest Shop limit |
-| `octaeconomy.admin` | op | Reload and debug |
-
-
-### Complete default shop catalogue
-
+| `octaeconomy.auction.expire.custom` | op | Set a custom duration in `/ah sell` |
+| `octaeconomy.casino.use` | true | Open the casino and age confirmation menu |
+| `octaeconomy.casino.roulette` | true | Play Roulette with virtual Vault currency |
 On first startup and every `/octaeconomy reload`, OctaEconomy expands each vanilla shop category from the running Paper server's `Material` registry and writes the full list into `plugins/OctaEconomy/shops/*.yml`. Every generated item receives explicit `material`, `buy-price`, `sell-price`, and `currency` fields. Supported mob spawners are expanded the same way using the server's `EntityType` registry. Existing item entries and manually configured prices are preserved; only missing entries/fields are added. The `catalog-defaults` section controls prices for newly discovered materials, not hidden runtime pricing. Admin-only/unobtainable technical materials (for example command blocks, barrier, bedrock and air) are intentionally excluded from the public shop.
 
 `/sell hand`, `/sell handall`, `/sell inv`, and SellGUI use the same expanded item catalogue, so the configured `sell-price` is shared between Shop and Sell features. Spawner entries are buy-only by default (`sell-price: -1.00`) to avoid selling spawners obtained through admin tools.
@@ -216,8 +173,9 @@ On first startup and every `/octaeconomy reload`, OctaEconomy expands each vanil
 ### `gui.yml`
 
 - `shop.background` and `shop.accent` control the panes around the symmetric 3-5-7-9-9 trapezoid. Incomplete rows are centered symmetrically; even item counts are mirrored around a deliberate center gap instead of being left-aligned.
+- `shop.category-background` and `shop.category-accent` style the category-page frame. The Shop main menu remains a 3-5-7-9-9 trapezoid; category pages use seven category tabs in slots 1–7, side paging in slots 0 and 8, and a square 4x9 product grid.
 - `auction.theme` sets the default dimension theme: `nether`, `overworld`, `ocean`, or `the_end`. Players can change it from the theme button in the Auction House footer or by using `/ah theme` and `/ah theme <dimension>`. The selected theme applies immediately and remains for that player session; after reconnect, the configured default is used again.
-- Each theme has configurable `title`, `background`, `accent`, `emblem`, `tagline`, and `price-style` values under `auction.themes.<theme>`. Existing legacy or MiniMessage colors in configured item/category names are preserved rather than wrapped in another palette. GUI lore is explicitly non-italic.
+- Each theme has a configurable color-styled `title` that still reads `Auction House`, plus `background`, `accent`, `emblem`, `tagline`, and `price-style` values under `auction.themes.<theme>`. Existing legacy or MiniMessage colors in configured item/category names are preserved rather than wrapped in another palette. GUI lore is explicitly non-italic.
 
 ### `discounts.yml`
 
@@ -241,13 +199,21 @@ Dates use ISO local date-time and the server's local timezone. Leave `starts-at`
 
 ### `auction.yml`
 
-Controls listing duration, tax, fee, maximum price range, listing count, allowed currencies, expiration scan interval, and blacklists. Per-currency price bounds can be defined under `currency-limits.<currency>.minimum` and `.maximum`. The default `allowed-currencies` contains `vault` and `"*"`; the wildcard permits any currency currently registered by ExcellentEconomy. Remove `"*"` and enumerate exact currency IDs to use an allowlist.
+Controls listing duration, tax, fee, maximum price range, listing count, allowed currencies, expiration scan interval, minimum custom duration, and blacklists. Custom durations require `octaeconomy.auction.expire.custom`. Formats are `30m`, `12h`, `3d`, and `1w`; defaults are 48 hours, with a configured maximum of 168 hours. Per-currency price bounds can be defined under `currency-limits.<currency>.minimum` and `.maximum`. The default `allowed-currencies` contains `vault` and `"*"`; the wildcard permits any currency currently registered by ExcellentEconomy. Remove `"*"` and enumerate exact currency IDs to use an allowlist.
+
+### `casino.yml`
+
+Casino uses Vault only. Configure `minimum-bet`, `maximum-bet`, three `chip-values`, and Roulette payout profit multipliers. The 21+ menu warns underage players to leave and requires a session self-attestation; it is not identity verification. All amounts are virtual server balance; there are no real-money deposits or withdrawals.
 
 ### Language files
 
 Edit `lang/en.yml`, `lang/id.yml`, and `lang/zh.yml`. Every current message key exists in all three language files. Set `language: id` to select Indonesian, or `language: zh` for Simplified Chinese. Missing keys fall back to English.
 
 ## Integrations
+
+Chest Shop was removed from this version. There is no `/chestshop` command or Chest Shop module.
+
+### Webhook setup
 
 - **Vault + EssentialsX:** Required. OctaEconomy reads and writes through the active Vault economy provider; it does not maintain a competing balance store.
 - **MMOItems:** Optional. Shop item definitions can use `mmoitems.type` and `mmoitems.id`. If the plugin or API is unavailable, those entries are skipped and vanilla shop entries remain active.
@@ -256,20 +222,10 @@ Edit `lang/en.yml`, `lang/id.yml`, and `lang/zh.yml`. Every current message key 
 
 Optional integrations are discovered at runtime. OctaEconomy does not bundle, shade, or copy another plugin's classes.
 
-### `chestshop.yml`
 
-Controls the built-in Chest Shop module: `enabled`, player shop limit, and how far a player may target a chest when creating/removing a shop. Shop locations and serialized item templates are stored in `chestshops.yml` and saved asynchronously.
-
-### `integrations.yml` — Saweria and Tebex notifications
-
-The webhook listener is disabled until at least one integration is enabled and its secret is supplied. It binds to `127.0.0.1:8765` by default. Keep it on localhost and publish it through an HTTPS reverse proxy; do not expose the plugin's plain HTTP listener directly to the internet. The reverse proxy must preserve the request body and signature headers.
-
-**Saweria:**
-
-1. In Saweria, configure an HTTP Webhook callback URL such as `https://your-domain.example/octaeconomy/saweria`.
-2. Set `webhooks.enabled: true`, `webhooks.saweria.enabled: true`, and paste your Saweria Streaming Key into `webhooks.saweria.streaming-key`.
-3. Route the public HTTPS path to `http://127.0.0.1:8765/saweria` (or set the matching custom `webhooks.paths.saweria`).
-4. OctaEconomy validates `Saweria-Callback-Signature` and de-duplicates event IDs before broadcasting donor name and amount to online players.
+1. Set `webhooks.enabled: true`, `webhooks.saweria.enabled: true`, and paste your Saweria Streaming Key into `webhooks.saweria.streaming-key`.
+2. Route the public HTTPS path to `http://127.0.0.1:8765/saweria` (or set the matching custom `webhooks.paths.saweria`).
+3. OctaEconomy validates `Saweria-Callback-Signature` and de-duplicates event IDs before broadcasting donor name and amount to online players.
 
 Saweria's HTTP webhook sends a JSON POST and documents the signature as HMAC-SHA256 over the concatenated ordered fields `version`, `id`, `amount_raw`, `donator_name`, and `donator_email`. See [Saweria HTTP Webhook docs](https://saweria.co/docs/webhook).
 
@@ -313,7 +269,7 @@ The GitHub Actions workflow installs Maven directly and does not depend on a Mav
 The output is:
 
 ```text
-target/OctaEconomy-0.0.3-2026-DEV-4.jar
+target/OctaEconomy-0.0.3-2026-DEV-5.jar
 ```
 
 The Maven project uses `provided` scope for Paper API and Vault API and does not shade dependencies. Paper supplies the SQLite JDBC driver. When `database.type: mysql` is selected, Paper resolves the MySQL connector declared in `plugin.yml`.
@@ -341,5 +297,10 @@ OctaEconomy is **100% free**. Resale, paywall access, mandatory-donation access,
 - Original author: **Alvran** — https://github.com/alvran-npc
 - Built for the Paper/Bukkit API and Vault economy ecosystem.
 - MMOItems, ExcellentEconomy, and SmartSpawner are optional runtime integrations.
-- QuickShop-Hikari was used only as a high-level chest-shop reference; the built-in Chest Shop is original and independent.
-- EconomyShopGUI and AxAuctions documentation were considered only as high-level UX inspiration. No reference plugin is a runtime dependency, and no reference plugin source code is included.
+
+
+## v0.0.3-2026-DEV-5 updates
+- `/ah sell <price> [currency] [expired]` supports duration tokens such as `12h`, `3d`, and `1w`. Custom duration requires `octaeconomy.auction.expire.custom` and is bounded by `auction.yml`.
+- Shop main menu retains the trapezoid category cards. Category pages now show seven category tabs across the top, with category pagination at both ends, and products in a square 4x9 grid. Category cards show item count and automatic buy/sell price ranges.
+- New `/casino` menu has a 21+ self-attestation gate. The first game is an original single-zero Roulette implementation using Vault virtual currency only. The gate is self-attestation, not identity/age verification, and the feature does not accept real-money deposits or payments.
+- Casino settings live in `casino.yml`; permissions are `octaeconomy.casino.use` and `octaeconomy.casino.roulette`.
