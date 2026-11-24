@@ -2,7 +2,7 @@
 
 **An all-in-one economy plugin featuring a categorized Shop GUI, Sell GUI, and a multi-currency Auction House. Fully integrated with Vault and EssentialsX.**
 
-Author: **Alvran** · [GitHub](https://github.com/alvran-npc) · Version: `0.0.3-2026-DEV-2`
+Author: **Alvran** · [GitHub](https://github.com/alvran-npc) · Version: `0.0.3-2026-DEV-4`
 
 OctaEconomy is an original Paper plugin project. It provides a configurable shop, inventory selling, and a database-backed auction house without requiring another shop or auction plugin.
 
@@ -43,7 +43,7 @@ The project is compiled against Paper API `1.21.4-R0.1-SNAPSHOT`. The source int
 
 1. Install Java 21 and a supported Paper 1.21.x server.
 2. Install and start Vault and EssentialsX. Confirm that EssentialsX registers an economy provider through Vault.
-3. Copy `OctaEconomy-0.0.3-2026-DEV-2.jar` into the server's `plugins/` directory.
+3. Copy `OctaEconomy-0.0.3-2026-DEV-4.jar` into the server's `plugins/` directory.
 4. Start the server once. OctaEconomy creates its default configuration, language files, shop category files, Chest Shop settings, webhook settings, and the auction database directory when the database is initialized.
 5. Edit `plugins/OctaEconomy/config.yml`, `auction.yml`, `gui.yml`, `discounts.yml`, and files under `shops/` as needed.
 6. Restart the server after changing database connection details or Paper library settings. Use `/oeco reload` for ordinary configuration, language, and shop changes.
@@ -188,6 +188,13 @@ Listings are stored with `ItemStack#serializeAsBytes`, preserving Bukkit item me
 | `octaeconomy.chestshop.limit.bypass` | op | Bypass the per-player Chest Shop limit |
 | `octaeconomy.admin` | op | Reload and debug |
 
+
+### Complete default shop catalogue
+
+On first startup and every `/octaeconomy reload`, OctaEconomy expands each vanilla shop category from the running Paper server's `Material` registry and writes the full list into `plugins/OctaEconomy/shops/*.yml`. Every generated item receives explicit `material`, `buy-price`, `sell-price`, and `currency` fields. Supported mob spawners are expanded the same way using the server's `EntityType` registry. Existing item entries and manually configured prices are preserved; only missing entries/fields are added. The `catalog-defaults` section controls prices for newly discovered materials, not hidden runtime pricing. Admin-only/unobtainable technical materials (for example command blocks, barrier, bedrock and air) are intentionally excluded from the public shop.
+
+`/sell hand`, `/sell handall`, `/sell inv`, and SellGUI use the same expanded item catalogue, so the configured `sell-price` is shared between Shop and Sell features. Spawner entries are buy-only by default (`sell-price: -1.00`) to avoid selling spawners obtained through admin tools.
+
 ## Configuration
 
 ### `config.yml`
@@ -306,7 +313,7 @@ The GitHub Actions workflow installs Maven directly and does not depend on a Mav
 The output is:
 
 ```text
-target/OctaEconomy-0.0.3-2026-DEV-2.jar
+target/OctaEconomy-0.0.3-2026-DEV-4.jar
 ```
 
 The Maven project uses `provided` scope for Paper API and Vault API and does not shade dependencies. Paper supplies the SQLite JDBC driver. When `database.type: mysql` is selected, Paper resolves the MySQL connector declared in `plugin.yml`.

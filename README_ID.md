@@ -2,7 +2,7 @@
 
 **Plugin ekonomi serba ada dengan Shop GUI berkategori, Sell GUI, dan Auction House multi-currency. Terintegrasi penuh dengan Vault dan EssentialsX.**
 
-Author: **Alvran** · [GitHub](https://github.com/alvran-npc) · Versi: `0.0.3-2026-DEV-2`
+Author: **Alvran** · [GitHub](https://github.com/alvran-npc) · Versi: `0.0.3-2026-DEV-4`
 
 OctaEconomy adalah proyek plugin Paper orisinal. Plugin ini menyediakan toko yang dapat dikonfigurasi, penjualan item dari inventory, dan rumah lelang berbasis database tanpa memerlukan plugin shop atau auction lain.
 
@@ -43,7 +43,7 @@ Proyek dikompilasi terhadap Paper API `1.21.4-R0.1-SNAPSHOT`. Source sengaja men
 
 1. Pasang Java 21 dan server Paper 1.21.x yang didukung.
 2. Pasang dan jalankan Vault serta EssentialsX. Pastikan EssentialsX mendaftarkan provider ekonomi melalui Vault.
-3. Salin `OctaEconomy-0.0.3-2026-DEV-2.jar` ke direktori `plugins/` server.
+3. Salin `OctaEconomy-0.0.3-2026-DEV-4.jar` ke direktori `plugins/` server.
 4. Jalankan server sekali. OctaEconomy membuat konfigurasi default, file bahasa, file kategori toko, pengaturan Chest Shop, pengaturan webhook, dan direktori database lelang ketika database diinisialisasi.
 5. Sesuaikan `plugins/OctaEconomy/config.yml`, `auction.yml`, `gui.yml`, `discounts.yml`, dan file di dalam folder `shops/`.
 6. Restart server setelah mengubah detail koneksi database atau pengaturan library Paper. Gunakan `/oeco reload` untuk perubahan konfigurasi biasa, bahasa, dan file shop.
@@ -188,6 +188,13 @@ Listing disimpan menggunakan `ItemStack#serializeAsBytes`, sehingga metadata ite
 | `octaeconomy.chestshop.limit.bypass` | op | Melewati batas jumlah Chest Shop per pemain |
 | `octaeconomy.admin` | op | Reload dan debug |
 
+
+### Katalog shop default lengkap
+
+Pada startup pertama dan setiap `/octaeconomy reload`, OctaEconomy memperluas setiap kategori shop vanilla berdasarkan registry `Material` dari server Paper yang sedang berjalan, lalu menuliskan seluruh daftar ke `plugins/OctaEconomy/shops/*.yml`. Setiap item yang dibuat akan memiliki field eksplisit `material`, `buy-price`, `sell-price`, dan `currency`. Spawner mob yang didukung juga dibuat dengan registry `EntityType`. Entri serta harga manual yang sudah ada tidak ditimpa; plugin hanya menambahkan item atau field yang belum ada. Bagian `catalog-defaults` hanya menentukan harga awal untuk material baru yang ditemukan, bukan harga tersembunyi di memori. Material teknis/admin yang tidak dapat diperoleh secara normal (misalnya command block, barrier, bedrock, dan air) sengaja tidak dimasukkan ke shop publik.
+
+`/sell hand`, `/sell handall`, `/sell inv`, dan SellGUI menggunakan katalog item yang sama, sehingga `sell-price` yang dikonfigurasi berlaku untuk Shop maupun fitur Sell. Spawner secara default hanya dapat dibeli (`sell-price: -1.00`) untuk mencegah penjualan spawner dari item admin.
+
 ## Konfigurasi
 
 ### `config.yml`
@@ -305,7 +312,7 @@ Workflow GitHub Actions memasang Maven secara langsung dan tidak bergantung pada
 File output:
 
 ```text
-target/OctaEconomy-0.0.3-2026-DEV-2.jar
+target/OctaEconomy-0.0.3-2026-DEV-4.jar
 ```
 
 Proyek Maven menggunakan scope `provided` untuk Paper API dan Vault API serta tidak melakukan shade dependency. Paper menyediakan driver JDBC SQLite. Saat `database.type: mysql` digunakan, Paper memuat konektor MySQL yang dideklarasikan di `plugin.yml`.

@@ -1,3 +1,12 @@
+## [0.0.3-2026-DEV-4] - 2026-11-19
+### Diperbaiki
+- Katalog Material vanilla lengkap sekarang dituliskan ke file YAML kategori, bukan hanya disimpan di cache runtime.
+- Setiap item hasil generate memiliki field buy-price, sell-price, dan currency yang eksplisit.
+- Field harga dan currency yang belum ada pada YAML lama ditambahkan tanpa menimpa nilai yang sudah dikonfigurasi.
+- Spawner mob yang didukung diperluas menjadi entri YAML eksplisit.
+- Klasifikasi Redstone diperluas untuk rail, copper bulb, slime/honey block, dan komponen redstone lainnya.
+- Shop dan seluruh perintah Sell menggunakan katalog item yang sama dan telah dikonfigurasi.
+
 # Catatan Perubahan
 
 ## [0.0.3-2026-DEV-2] - 2026-11-19

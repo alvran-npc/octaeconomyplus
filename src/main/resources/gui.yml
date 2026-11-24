@@ -1,0 +1,41 @@
+config-version: 2
+shop:
+  title: "<dark_green>OctaEconomy <gray>› <white>Shop"
+  rows: 6
+  background: BLACK_STAINED_GLASS_PANE
+  accent: GREEN_STAINED_GLASS_PANE
+auction:
+  theme: overworld # nether, overworld, ocean, the_end
+  rows: 6
+  themes:
+    overworld:
+      title: "<gradient:#b6f58b:#3cae71><bold>OVERWORLD EXCHANGE</bold></gradient>"
+      tagline: "Adventurer's market • World essentials"
+      background: GRAY_STAINED_GLASS_PANE
+      accent: LIME_STAINED_GLASS_PANE
+      emblem: COMPASS
+      price-style: "<gradient:#d9ff9e:#83d65a>"
+    nether:
+      title: "<gradient:#ff8247:#b51f28><bold>INFERNAL EXCHANGE</bold></gradient>"
+      tagline: "Ashen markets • Nether treasures"
+      background: BLACK_STAINED_GLASS_PANE
+      accent: RED_STAINED_GLASS_PANE
+      emblem: BLAZE_POWDER
+      price-style: "<gradient:#ffb36c:#ff6545>"
+    ocean:
+      title: "<gradient:#7be9ff:#2678d8><bold>ABYSSAL EXCHANGE</bold></gradient>"
+      tagline: "Deep-sea goods • Ocean relics"
+      background: LIGHT_BLUE_STAINED_GLASS_PANE
+      accent: CYAN_STAINED_GLASS_PANE
+      emblem: HEART_OF_THE_SEA
+      price-style: "<gradient:#a8f5ff:#55b8ff>"
+    the_end:
+      title: "<gradient:#e8a4ff:#8e5bda><bold>END DIMENSION EXCHANGE</bold></gradient>"
+      tagline: "Void artifacts • Ender treasures"
+      background: PURPLE_STAINED_GLASS_PANE
+      accent: MAGENTA_STAINED_GLASS_PANE
+      emblem: END_CRYSTAL
+      price-style: "<gradient:#e9bdff:#bb8cff>"
+sell:
+  title: "<dark_green>Sell Items <gray>› <white>Place items here"
+  rows: 6

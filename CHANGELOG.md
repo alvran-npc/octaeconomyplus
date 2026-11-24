@@ -1,3 +1,12 @@
+## [0.0.3-2026-DEV-4] - 2026-11-19
+### Fixed
+- Materialized the complete vanilla Material catalogue into category YAML files instead of keeping most entries only in the runtime cache.
+- Added explicit buy-price, sell-price, and currency fields for every generated item.
+- Added missing item price/currency fields to existing user YAML entries without overwriting configured values.
+- Expanded supported mob spawners into explicit YAML entries.
+- Improved Redstone classification for rails, copper bulbs, slime/honey blocks, and additional redstone components.
+- Kept Shop and Sell commands on the same fully configured item catalogue.
+
 # Changelog
 
 ## [0.0.3-2026-DEV-2] - 2026-11-19
