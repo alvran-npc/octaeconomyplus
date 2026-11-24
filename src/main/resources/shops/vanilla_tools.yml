@@ -1,0 +1,29 @@
+# The plugin expands this seed file into a complete editable catalogue on first startup/reload.
+category:
+  id: vanilla_tools
+  display-name: "&6Tools & Equipment"
+  icon: DIAMOND_PICKAXE
+  slot: 20
+  permission: ""
+  auto-include-vanilla: true
+  # Used only to create missing item entries. Each generated entry is saved below with explicit prices.
+  catalog-defaults:
+    buy-base: 80.00
+    sell-ratio: 0.20
+    currency: vault
+items:
+  iron_pickaxe:
+    material: IRON_PICKAXE
+    buy-price: 150.0
+    sell-price: 35.0
+    currency: vault
+  diamond_sword:
+    material: DIAMOND_SWORD
+    buy-price: 1200.0
+    sell-price: 250.0
+    currency: vault
+  iron_helmet:
+    material: IRON_HELMET
+    buy-price: 120.0
+    sell-price: 30.0
+    currency: vault

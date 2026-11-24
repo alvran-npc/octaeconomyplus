@@ -9,6 +9,10 @@
 
 # Catatan Perubahan
 
+### Perbaikan Build (2026-11-24)
+- Memperbaiki kesalahan kompilasi Java 21 di `AuctionModule`: nama tampilan listing yang dipotong kini disimpan dalam variabel lokal final sebelum digunakan oleh lambda callback asinkron.
+- Alur pembuatan listing, pengembalian item/refund, biaya listing, dan notifikasi sukses tetap dipertahankan.
+
 ## [0.0.3-2026-DEV-2] - 2026-11-19
 
 ### Ditambahkan

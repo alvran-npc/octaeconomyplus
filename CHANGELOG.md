@@ -9,6 +9,10 @@
 
 # Changelog
 
+### Build Fix (2026-11-24)
+- Fixed the Java 21 compilation error in `AuctionModule`: the truncated listing display name is now stored in a final local variable before it is captured by the asynchronous completion lambda.
+- Kept the listing creation, item return/refund, listing fee, and success notification flow unchanged.
+
 ## [0.0.3-2026-DEV-2] - 2026-11-19
 
 ### Added
