@@ -42,7 +42,7 @@ jobs:
       - name: Upload plugin JAR
         uses: actions/upload-artifact@v4
         with:
-          name: OctaEconomy-0.0.3-2026-DEV-8-${{ github.sha }}
-          path: target/OctaEconomy-0.0.3-2026-DEV-8.jar
+          name: OctaEconomy-0.0.3-2026-${{ github.sha }}
+          path: target/OctaEconomy-0.0.3-2026.jar
           if-no-files-found: error
           retention-days: 14
