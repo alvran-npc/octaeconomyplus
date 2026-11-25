@@ -84,9 +84,9 @@ public final class CasinoModule implements Module, CommandExecutor, TabCompleter
         ageAccepted.clear(); pendingRoulette.clear(); activeSpins.clear(); animationTasks.clear(); bets.clear(); lastResults.clear();
     }
     @Override public void reload() {
-        config = YamlConfiguration.loadConfiguration(new File(plugin.getDataFolder(), "casino/settings.yml"));
-        gameConfig = YamlConfiguration.loadConfiguration(new File(plugin.getDataFolder(), "casino/games/roulette.yml"));
-        animationConfig = YamlConfiguration.loadConfiguration(new File(plugin.getDataFolder(), "casino/animation/roulette.yml"));
+        config = YamlConfiguration.loadConfiguration(new File(plugin.getDataFolder(), "Casino/settings.yml"));
+        gameConfig = YamlConfiguration.loadConfiguration(new File(plugin.getDataFolder(), "Casino/Games/roulette.yml"));
+        animationConfig = YamlConfiguration.loadConfiguration(new File(plugin.getDataFolder(), "Casino/Animation/roulette.yml"));
     }
 
     public void clearPlayer(UUID id) {

@@ -86,9 +86,9 @@ public final class AuctionModule implements Module, CommandExecutor, TabComplete
         debounce.clear(); delivering.clear(); paying.clear(); database.close();
     }
     @Override public void reload() {
-        auctionConfig = YamlConfiguration.loadConfiguration(new java.io.File(plugin.getDataFolder(), "auctions/auctions.yml"));
-        guiConfig = YamlConfiguration.loadConfiguration(new java.io.File(plugin.getDataFolder(), "auctions/theme.yml"));
-        layoutConfig = YamlConfiguration.loadConfiguration(new java.io.File(plugin.getDataFolder(), "gui/auction.yml"));
+        auctionConfig = YamlConfiguration.loadConfiguration(new java.io.File(plugin.getDataFolder(), "Auctions/auctions.yml"));
+        guiConfig = YamlConfiguration.loadConfiguration(new java.io.File(plugin.getDataFolder(), "Auctions/theme.yml"));
+        layoutConfig = YamlConfiguration.loadConfiguration(new java.io.File(plugin.getDataFolder(), "GUI/Auction.yml"));
     }
 
     @Override public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {

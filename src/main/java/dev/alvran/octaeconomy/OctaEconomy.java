@@ -94,7 +94,7 @@ public final class OctaEconomy extends JavaPlugin implements CommandExecutor, Ta
             case "donate" -> sendDonationLink(sender);
             case "reload" -> {
                 if (!sender.hasPermission("octaeconomy.admin")) { lang.send(sender, "no-permission"); return true; }
-                reloadConfig(); configManager.ensureFiles(); lang.reload(); mmoItems.setup(); smartSpawner.setup(); currencies.setup(); modules.reloadAll(); lang.send(sender, "reload");
+                configManager.ensureFiles(); reloadConfig(); lang.reload(); mmoItems.setup(); smartSpawner.setup(); currencies.setup(); modules.reloadAll(); lang.send(sender, "reload");
             }
             case "debug" -> {
                 if (!sender.hasPermission("octaeconomy.admin")) { lang.send(sender, "no-permission"); return true; }

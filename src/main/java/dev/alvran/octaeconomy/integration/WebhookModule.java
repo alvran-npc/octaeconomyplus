@@ -64,7 +64,7 @@ public final class WebhookModule implements Module {
     @Override public void reload() {
         stopServer();
         config = YamlConfiguration.loadConfiguration(plugin.getDataFolder().toPath().resolve("integrations/saweria-tebex.yml").toFile());
-        eventFile = plugin.getDataFolder().toPath().resolve(config.getString("webhooks.dedupe-file", "data/webhook-events.log"));
+        eventFile = plugin.getDataFolder().toPath().resolve(config.getString("webhooks.dedupe-file", "Data/webhook-events.log"));
         loadProcessedIds();
         startServer();
     }

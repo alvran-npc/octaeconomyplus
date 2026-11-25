@@ -25,8 +25,8 @@ public final class LangManager {
         language = plugin.getConfig().getString("language", "en").toLowerCase();
         if (!language.equals("en") && !language.equals("id") && !language.equals("zh")) language = "en";
         messages.clear();
-        YamlConfiguration fallback = YamlConfiguration.loadConfiguration(new File(plugin.getDataFolder(), "lang/en.yml"));
-        YamlConfiguration selected = YamlConfiguration.loadConfiguration(new File(plugin.getDataFolder(), "lang/" + language + ".yml"));
+        YamlConfiguration fallback = YamlConfiguration.loadConfiguration(new File(plugin.getDataFolder(), "Lang/Message/en.yml"));
+        YamlConfiguration selected = YamlConfiguration.loadConfiguration(new File(plugin.getDataFolder(), "Lang/Message/" + language + ".yml"));
         for (String key : fallback.getKeys(false)) messages.put(key, selected.getString(key, fallback.getString(key, "")));
     }
     public Component component(String key, Map<String, ?> placeholders) {
