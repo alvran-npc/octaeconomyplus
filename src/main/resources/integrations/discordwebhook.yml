@@ -1,8 +1,0 @@
-# Optional outgoing Discord webhook bridge. Disabled by default.
-enabled: false
-url: ""
-notifications:
-  shop-transactions: false
-  auction-listings: false
-  auction-sales: false
-  casino-spins: false
