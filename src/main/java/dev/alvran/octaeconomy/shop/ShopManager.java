@@ -30,14 +30,14 @@ public final class ShopManager {
     private final SmartSpawnerHook smartSpawner;
     private final Map<String, ShopCategory> categories = new LinkedHashMap<>();
     private final Map<String, List<ShopItem>> categoryItems = new LinkedHashMap<>();
-    private final Map<String, ShopItem> items = new HashMap<>();
+    private final Map<String, ShopItem> items = new LinkedHashMap<>();
     public ShopManager(JavaPlugin plugin, MMOItemsHook mmoItems, SmartSpawnerHook smartSpawner) {
         this.plugin = plugin; this.mmoItems = mmoItems; this.smartSpawner = smartSpawner;
     }
 
     public void reload() {
         categories.clear(); categoryItems.clear(); items.clear();
-        File folder = new File(plugin.getDataFolder(), "shop");
+        File folder = new File(plugin.getDataFolder(), "Shops/Category");
         File[] files = folder.listFiles((dir, name) -> name.toLowerCase(Locale.ROOT).endsWith(".yml"));
         if (files == null) return;
         Arrays.sort(files, Comparator.comparing(File::getName));
@@ -46,7 +46,7 @@ public final class ShopManager {
                 loadCategory(file);
             } catch (RuntimeException ex) {
                 // A malformed category must never prevent every other shop category from loading.
-                plugin.getLogger().log(Level.WARNING, "shop/" + file.getName() + ": category load failed; skipped this category", ex);
+                plugin.getLogger().log(Level.WARNING, "Shops/Category/" + file.getName() + ": category load failed; skipped this category", ex);
             }
         }
     }
@@ -83,10 +83,86 @@ public final class ShopManager {
                 String currency = node.getString("currency", plugin.getConfig().getString("economy.default-currency", "vault"));
                 ShopItem item = new ShopItem(key, id, template, buy, sell, currency);
                 loaded.add(item);
-                items.put(id + ":" + key, item);
             } catch (Exception ex) { warn(file, "invalid item '" + key + "': " + ex.getMessage()); }
         }
+        loaded.sort(itemOrder(id));
+        for (ShopItem item : loaded) items.put(id + ":" + item.id(), item);
         categories.put(id, info); categoryItems.put(id, List.copyOf(loaded));
+    }
+
+    private static final Set<String> ALPHABETICAL_CATEGORIES = Set.of("redstone", "mobs_drop", "spawners");
+    private static final List<String> WOOD_FAMILIES = List.of("OAK", "SPRUCE", "BIRCH", "JUNGLE", "ACACIA", "DARK_OAK", "MANGROVE", "CHERRY", "BAMBOO", "CRIMSON", "WARPED");
+    private static final List<String> BUILDING_FAMILIES = List.of("MOSSY_COBBLESTONE", "COBBLED_DEEPSLATE", "RED_SANDSTONE", "SANDSTONE", "STONE", "GRANITE", "DIORITE", "ANDESITE", "DEEPSLATE", "TUFF", "CALCITE", "PRISMARINE", "BLACKSTONE", "BASALT", "NETHERRACK", "END_STONE", "QUARTZ", "PURPUR", "BRICK", "MUD", "CLAY");
+    private static final List<String> COLOR_FAMILIES = List.of("WHITE", "ORANGE", "MAGENTA", "LIGHT_BLUE", "YELLOW", "LIME", "PINK", "GRAY", "LIGHT_GRAY", "CYAN", "PURPLE", "BLUE", "BROWN", "GREEN", "RED", "BLACK");
+    private static final List<String> RESOURCE_FAMILIES = List.of("NETHERITE", "DIAMOND", "EMERALD", "GOLD", "IRON", "COPPER", "AMETHYST", "LAPIS", "REDSTONE", "COAL", "QUARTZ", "NETHER_BRICK", "PRISMARINE", "HONEY", "SLIME");
+    private static final List<String> WOOD_PARTS = List.of("LOG", "WOOD", "STRIPPED_LOG", "STRIPPED_WOOD", "PLANKS", "MOSAIC", "STAIRS", "MOSAIC_STAIRS", "SLAB", "MOSAIC_SLAB", "FENCE", "FENCE_GATE", "DOOR", "TRAPDOOR", "PRESSURE_PLATE", "BUTTON", "SIGN", "HANGING_SIGN", "BOAT", "CHEST_BOAT", "LEAVES", "SAPLING", "PROPAGULE");
+    private static final List<String> COLOR_PARTS = List.of("WOOL", "CARPET", "BED", "BANNER", "CONCRETE_POWDER", "CONCRETE", "GLAZED_TERRACOTTA", "TERRACOTTA", "STAINED_GLASS_PANE", "STAINED_GLASS");
+    private static final List<String> TOOL_PARTS = List.of("SWORD", "PICKAXE", "AXE", "SHOVEL", "HOE", "HELMET", "CHESTPLATE", "LEGGINGS", "BOOTS", "HORSE_ARMOR");
+
+    private Comparator<ShopItem> itemOrder(String categoryId) {
+        if (ALPHABETICAL_CATEGORIES.contains(categoryId.toLowerCase(Locale.ROOT)))
+            return Comparator.comparing(item -> item.template().getType().name(), String.CASE_INSENSITIVE_ORDER);
+        return Comparator.comparingInt(this::sortGroup).thenComparingInt(this::sortFamily)
+                .thenComparingInt(this::sortVariant)
+                .thenComparing(item -> item.template().getType().name(), String.CASE_INSENSITIVE_ORDER);
+    }
+
+    private int sortGroup(ShopItem item) {
+        String n = item.template().getType().name();
+        if (woodIndex(n) >= 0) return 0;
+        if (buildingIndex(n) >= 0) return 1;
+        if (colorIndex(n) >= 0) return 2;
+        if (resourceIndex(n) >= 0) return 3;
+        if (toolIndex(n) >= 0) return 4;
+        return 5;
+    }
+    private int sortFamily(ShopItem item) {
+        String n = item.template().getType().name();
+        int i=woodIndex(n); if(i>=0)return i;
+        i=buildingIndex(n); if(i>=0)return i;
+        i=colorIndex(n); if(i>=0)return i;
+        i=resourceIndex(n); if(i>=0)return i;
+        i=toolIndex(n); return Math.max(0,i);
+    }
+    private int sortVariant(ShopItem item) {
+        String n=item.template().getType().name();
+        int i=woodIndex(n);
+        if(i>=0) {
+            String normalized=n.startsWith("STRIPPED_")?n.substring(9):n;
+            String suffix=normalized.substring(WOOD_FAMILIES.get(i).length()+1);
+            return WOOD_PARTS.indexOf(suffix)<0?99:WOOD_PARTS.indexOf(suffix);
+        }
+        i=colorIndex(n);
+        if(i>=0) return suffixIndex(COLOR_PARTS,n.substring(COLOR_FAMILIES.get(i).length()+1));
+        i=toolIndex(n);
+        if(i>=0) return suffixIndex(TOOL_PARTS,n.substring(n.indexOf('_')+1));
+        return 99;
+    }
+    private int suffixIndex(List<String> parts,String suffix) {
+        for(int i=0;i<parts.size();i++) if(suffix.endsWith(parts.get(i))) return i;
+        return 99;
+    }
+    private int woodIndex(String n) {
+        String normalized=n.startsWith("STRIPPED_")?n.substring(9):n;
+        for(int i=0;i<WOOD_FAMILIES.size();i++) if(normalized.startsWith(WOOD_FAMILIES.get(i)+"_")) return i;
+        return -1;
+    }
+    private int buildingIndex(String n) {
+        for(int i=0;i<BUILDING_FAMILIES.size();i++) if(n.equals(BUILDING_FAMILIES.get(i))||n.startsWith(BUILDING_FAMILIES.get(i)+"_")) return i;
+        return -1;
+    }
+    private int colorIndex(String n) {
+        for(int i=0;i<COLOR_FAMILIES.size();i++) if(n.startsWith(COLOR_FAMILIES.get(i)+"_")) return i;
+        return -1;
+    }
+    private int resourceIndex(String n) {
+        for(int i=0;i<RESOURCE_FAMILIES.size();i++) if(n.equals(RESOURCE_FAMILIES.get(i))||n.startsWith(RESOURCE_FAMILIES.get(i)+"_")) return i;
+        return -1;
+    }
+    private int toolIndex(String n) {
+        List<String> tiers=List.of("WOODEN","STONE","IRON","GOLDEN","DIAMOND","NETHERITE");
+        for(int i=0;i<tiers.size();i++) if(n.startsWith(tiers.get(i)+"_")) return i;
+        return -1;
     }
 
     /**
@@ -181,10 +257,10 @@ public final class ShopManager {
         if (added > 0) {
             try {
                 yaml.save(file);
-                plugin.getLogger().info("Expanded shop/" + file.getName() + " with " + added
+                plugin.getLogger().info("Expanded Shops/Category/" + file.getName() + " with " + added
                         + " explicit catalogue entries/default fields. Existing prices were preserved.");
             } catch (java.io.IOException ex) {
-                plugin.getLogger().log(Level.WARNING, "Could not persist expanded shop catalogue to shop/" + file.getName(), ex);
+                plugin.getLogger().log(Level.WARNING, "Could not persist expanded shop catalogue to Shops/Category/" + file.getName(), ex);
             }
         }
     }
@@ -349,7 +425,7 @@ public final class ShopManager {
         }
     }
 
-    private void warn(File file, String message) { plugin.getLogger().warning("shop/" + file.getName() + ": " + message); }
+    private void warn(File file, String message) { plugin.getLogger().warning("Shops/Category/" + file.getName() + ": " + message); }
     public Collection<ShopCategory> categories() { return Collections.unmodifiableCollection(categories.values()); }
     public ShopCategory category(String id) { return categories.get(id.toLowerCase(Locale.ROOT)); }
     public List<ShopItem> items(String category) { return categoryItems.getOrDefault(category, List.of()); }
