@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.0.3-2026] - 2026-11-25
+Update perbaikan: tanpa fitur gameplay baru, file lebih rapi dan teks dapat diedit.
+
+### Diubah
+- Menu Shop dan Casino menampilkan **money** alih-alih `vault` (dapat diatur lewat `shop.currency-names` dan `casino/settings.yml: currency-label`), termasuk pesan chat beli/jual.
+- Item Shop dikelompokkan menurut jenis, bukan A-Z biasa: item terkait berdekatan (oak log, stripped oak log, oak planks, oak stairs, oak slab, oak button...). Spawners, Mob Drops, dan Redstone tetap alfabetis. Diatur lewat `shop.sorting.mode` dan `shop.sorting.alphabetical-categories` di `config.yml`.
+- Folder data disusun ulang: `shop/*.yml` -> `shops/category/`, `shops/discounts.yml` -> `shops/discount.yml`, `lang/*.yml` -> `lang/message/`, `data/Playerdata.yml` -> `data/PlayerData.yml`. Pengaturan Shop (`shops/settings.yml`) dipindah ke `config.yml` di bawah `shop:`. Tata letak lama dimigrasi otomatis tanpa menimpa apa pun (`config-version` 7).
+- `/octaeconomy reload` kini memuat ulang `config.yml` setelah migrasi file agar pengaturan yang dipindah langsung berlaku.
+
+### Ditambahkan
+- Lore Shop yang dapat diedit: `gui/shop.yml` `shop.lore.categories.main-menu`, `shop.lore.categories.tab`, `shop.lore.shop-items`, dan `shop.player-info` dengan placeholder dan baris blok (`{buy}`, `{sell}`, `{click-hints}`). Key yang hilang memakai default bawaan.
+- `shop.lore.divider` dan `shop.currency-names` di `gui/shop.yml`.
+
+### Diperbaiki
+- Judul item vanilla di Shop tidak lagi tampil italic.
+- Nama diskon musiman dengan tag MiniMessage tidak lagi terpotong di tengah tag pada lore item.
+
 ## [0.0.3-2026-DEV-8] - 2026-11-25
 ### Ditambahkan
 - Menu roda Roulette tersendiri (`CASINO_WHEEL`): SPIN menarik taruhan dan membuka roda 54 slot dengan cincin 26 kantong berurutan seperti roda Eropa yang berputar melewati penunjuk tetap di tengah atas, melambat, lalu berhenti pada hasil yang sudah ditentukan, dengan suara tik, pengumuman menang/kalah, dan kembali otomatis ke meja.

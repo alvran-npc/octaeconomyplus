@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.0.3-2026] - 2026-11-25
+Fix update: no new gameplay, tidier files and editable texts.
+
+### Changed
+- Shop and Casino menus show **money** instead of `vault` (configurable via `shop.currency-names` and `casino/settings.yml: currency-label`), including purchase/sell chat messages.
+- Shop items are grouped by type instead of plain A-Z: related items stay together (oak log, stripped oak log, oak planks, oak stairs, oak slab, oak button...). Spawners, Mob Drops and Redstone stay alphabetical. Controlled by `shop.sorting.mode` and `shop.sorting.alphabetical-categories` in `config.yml`.
+- Data folder reorganized: `shop/*.yml` -> `shops/category/`, `shops/discounts.yml` -> `shops/discount.yml`, `lang/*.yml` -> `lang/message/`, `data/Playerdata.yml` -> `data/PlayerData.yml`. Shop settings (`shops/settings.yml`) moved into `config.yml` under `shop:`. Older layouts are migrated automatically without overwriting anything (`config-version` 7).
+- `/octaeconomy reload` now reloads `config.yml` after file migration so moved settings apply immediately.
+
+### Added
+- Editable Shop lore: `gui/shop.yml` `shop.lore.categories.main-menu`, `shop.lore.categories.tab`, `shop.lore.shop-items` and `shop.player-info` with placeholders and block lines (`{buy}`, `{sell}`, `{click-hints}`). Missing keys fall back to built-in defaults.
+- `shop.lore.divider` and `shop.currency-names` in `gui/shop.yml`.
+
+### Fixed
+- Vanilla item titles in the Shop no longer render in italic.
+- A seasonal-sale name with MiniMessage tags is no longer cut off mid-tag in item lore.
+
 ## [0.0.3-2026-DEV-8] - 2026-11-25
 ### Added
 - Dedicated Roulette wheel menu (`CASINO_WHEEL`): SPIN debits the stake and opens a 54-slot wheel with a 26-pocket ring in European wheel order that rotates past a fixed top-center pointer, decelerates, and lands on the pre-determined result, with tick sounds, a win/loss reveal and an automatic return to the table.

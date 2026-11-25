@@ -2,7 +2,7 @@
 
 **An all-in-one economy plugin featuring a categorized Shop GUI, Sell GUI, and a multi-currency Auction House. Fully integrated with Vault and EssentialsX.**
 
-Author: **Alvran** · [GitHub](https://github.com/alvran-npc) · Version: `0.0.3-2026-DEV-8`
+Author: **Alvran** · [GitHub](https://github.com/alvran-npc) · Version: `0.0.3-2026`
 
 OctaEconomy is an original Paper plugin project. It provides a configurable shop, inventory selling, and a database-backed auction house without requiring another shop or auction plugin.
 
@@ -17,7 +17,7 @@ OctaEconomy is an original Paper plugin project. It provides a configurable shop
 - Optional in-memory dynamic prices and daily item sell limits (both disabled by default).
 - Auction listings backed by SQLite by default, with MySQL/MariaDB configuration support.
 - Multi-currency auction listings with four live-switchable dimension themes (Nether, Overworld, Ocean, and The End), a dedicated 7×4 listing grid, themed header and side rails, listing fee, tax, listing limits, expiration, cancellation, search, and confirmation menu.
-- Seasonal shop discounts configured in `shops/discounts.yml`, with optional date windows and category/item targeting. Discounted prices are displayed in compact lore and applied to purchases.
+- Seasonal shop discounts configured in `shops/discount.yml`, with optional date windows and category/item targeting. Discounted prices are displayed in compact lore and applied to purchases.
 |---|---|
 | Server | Paper 1.21.x (the plugin uses the Bukkit `api-version: '1.20'` compatibility declaration) |
 | Java | Java 21 |
@@ -25,7 +25,7 @@ OctaEconomy is an original Paper plugin project. It provides a configurable shop
 | Optional plugins | MMOItems, ExcellentEconomy, SmartSpawner |
 1. Install Java 21 and a supported Paper 1.21.x server.
 2. Install and start Vault and EssentialsX. Confirm that EssentialsX registers an economy provider through Vault.
-3. Copy `OctaEconomy-0.0.3-2026-DEV-8.jar` into the server's `plugins/` directory.
+3. Copy `OctaEconomy-0.0.3-2026.jar` into the server's `plugins/` directory.
 - `/shop blocks` opens the `blocks` category directly.
 - `/shop search diamond` opens matching shop entries.
 - Click an item to open its quantity selector. The selector offers 1, 16, 32, 64, and a plus/minus custom quantity control.
@@ -45,11 +45,11 @@ OctaEconomy is an original Paper plugin project. It provides a configurable shop
 
 The eight vanilla categories with `auto-include-vanilla: true` are populated from the Paper `Material` registry during startup/reload, not just from the sample YAML entries. All regular item-bearing materials are assigned to a category; technical-only materials are filtered. Custom entries in each YAML file override generated values for that material. The Spawners category also generates entries for supported living `EntityType` values. The optional MMOItems category is intentionally configured by exact `type` + `id` entries in `shop/mmoitems.yml`; its third-party item registry is not auto-enumerated by this version.
 
-Generated prices are starting defaults from each category's `auto-pricing` section. Set a material explicitly in `shop/<category>.yml` to use a custom price/currency, or adjust category defaults for newly generated entries.
+Generated prices are starting defaults from each category's `auto-pricing` section. Set a material explicitly in `shops/category/<category>.yml` to use a custom price/currency, or adjust category defaults for newly generated entries.
 
 ### Add an item to a shop category
 
-Open `plugins/OctaEconomy/shop/blocks.yml` and add an entry under `items`:
+Open `plugins/OctaEconomy/shops/category/blocks.yml` and add an entry under `items`:
 
 ```yaml
 items:
@@ -64,7 +64,7 @@ Use `-1` or omit a price to disable that transaction type. Reload with `/oeco re
 
 ### Add a new category
 
-Create a new YAML file in `plugins/OctaEconomy/shop/`, for example `ores.yml`:
+Create a new YAML file in `plugins/OctaEconomy/shops/category/`, for example `ores.yml`:
 
 ```yaml
 category:
@@ -161,8 +161,9 @@ On first startup and every `/octaeconomy reload`, OctaEconomy expands each vanil
 - `database.sqlite-file`: SQLite path relative to the plugin data folder.
 - `database.mysql`: MySQL connection settings.
 - `economy.default-currency`: currency used when a shop item or auction command omits one.
-Shop-specific settings are in `shops/settings.yml`:
+Shop-specific settings are in the `shop:` section of `config.yml` (previously `shops/settings.yml`):
 - `shop.click-actions`: actions for left and right clicks (`buy` or `sell`).
+- `shop.sorting`: `mode` (`grouped`, `alphabetical`, `file`) and `alphabetical-categories` (default `spawners`, `mobs_drop`, `redstone`). Grouped mode keeps related items together, e.g. every oak item side by side.
 - `shop.dynamic-price`: optional fluctuation bounds and recovery settings; disabled by default.
 - `shop.daily-limit`: optional default and per-item daily amount limits; disabled by default.
 - `shop.sell-multiplier.enabled`: enables permission-based sell multipliers.
@@ -175,15 +176,15 @@ Shop-specific settings are in `shops/settings.yml`:
 
 ```text
 plugins/OctaEconomy/
-├── config.yml
+├── config.yml                      # general options + Shop settings (shop:)
 ├── data/
-│   ├── Playerdata.yml
+│   ├── PlayerData.yml
 │   └── database.db                 # created by SQLite on first startup
-├── lang/                           # en.yml, id.yml, zh.yml
+├── lang/
+│   └── message/                    # en.yml, id.yml, zh.yml
 ├── shops/
-│   ├── settings.yml
-│   └── discounts.yml
-├── shop/                           # category files: blocks.yml, redstone.yml, etc.
+│   ├── discount.yml
+│   └── category/                   # blocks.yml, redstone.yml, spawners.yml, etc.
 ├── auctions/
 │   ├── auctions.yml
 │   └── theme.yml
@@ -192,7 +193,7 @@ plugins/OctaEconomy/
 │   ├── animation/roulette.yml
 │   └── games/roulette.yml
 ├── gui/
-│   ├── shop.yml
+│   ├── shop.yml                    # Shop/Sell GUI text, category + item lore templates
 │   └── auction.yml
 └── integrations/
     ├── discordsrv.yml
@@ -200,16 +201,18 @@ plugins/OctaEconomy/
     └── saweria-tebex.yml
 ```
 
-The plugin creates `data/database.db` through SQLite when the database initializes; a binary database is intentionally not bundled in the source JAR. The two Discord YAML files are reserved integration settings and are disabled by default. Inbound Saweria/Tebex callbacks use the separate `integrations/saweria-tebex.yml` file. On upgrade from DEV-5, legacy files are copied to their new locations only when the destination does not exist; legacy files are kept as a rollback copy.
+The plugin creates `data/database.db` through SQLite when the database initializes; a binary database is intentionally not bundled in the source JAR. The two Discord YAML files are reserved integration settings and are disabled by default. Inbound Saweria/Tebex callbacks use the separate `integrations/saweria-tebex.yml` file. On upgrade, older layouts (`shop/*.yml`, `shops/settings.yml`, `shops/discounts.yml`, `lang/*.yml`, `data/Playerdata.yml`) are moved to the locations above automatically. Nothing is overwritten: if a destination already exists the old file is left in place, and the old `shops/settings.yml` values are merged into `config.yml`.
 
 ### `gui/shop.yml` and `auctions/theme.yml`
 
+- **Editable lore:** `gui/shop.yml` → `shop.lore.categories.main-menu`, `shop.lore.categories.tab`, `shop.lore.shop-items` and `shop.player-info` control every line players read, with placeholders such as `{items}`, `{buy-range}`, `{buy-price}`, `{sell-price}`, `{currency}`, `{player}`, `{rank}`, `{balance}` and block lines like `{buy}` / `{sell}` / `{click-hints}`. Edit them and run `/octaeconomy reload`; no source change is needed.
+- `shop.currency-names` maps a currency id to the text players see (`vault: money`).
 - `gui/shop.yml`: `shop.background` and `shop.accent` control the panes around the symmetric 3-5-7-7 trapezoid. Incomplete rows are centered symmetrically; even item counts are mirrored around a deliberate center gap instead of being left-aligned.
 - `shop.category-background` and `shop.category-accent` style the category-page frame. The Shop main menu remains a 3-5-7-7 trapezoid; category pages use seven category tabs in slots 1–7, side paging in slots 0 and 8, and a framed 4x7 product grid (28 items per page).
 - `auction.theme` sets the default dimension theme: `nether`, `overworld`, `ocean`, or `the_end`. Players can change it from the theme button in the Auction House footer or by using `/ah theme` and `/ah theme <dimension>`. The selected theme applies immediately and remains for that player session; after reconnect, the configured default is used again.
 - Each theme has a configurable color-styled `title` that still reads `Auction House`, plus `background`, `accent`, `emblem`, `tagline`, and `price-style` values under `auction.themes.<theme>`. Existing legacy or MiniMessage colors in configured item/category names are preserved rather than wrapped in another palette. GUI lore is explicitly non-italic.
 
-### `shops/discounts.yml`
+### `shops/discount.yml`
 
 Enable a seasonal offer by setting the top-level `enabled: true`, choosing its key in `active`, and setting that offer's `enabled: true`. For example:
 
@@ -239,7 +242,7 @@ Casino uses Vault only. `casino/settings.yml` controls enablement and chip value
 
 ### Language files
 
-Edit `lang/en.yml`, `lang/id.yml`, and `lang/zh.yml`. Every current message key exists in all three language files. Set `language: id` to select Indonesian, or `language: zh` for Simplified Chinese. Missing keys fall back to English.
+Edit `lang/message/en.yml`, `lang/message/id.yml`, and `lang/message/zh.yml`. Every current message key exists in all three language files. Set `language: id` to select Indonesian, or `language: zh` for Simplified Chinese. Missing keys fall back to English.
 
 ## Integrations
 
@@ -301,7 +304,7 @@ The GitHub Actions workflow installs Maven directly and does not depend on a Mav
 The output is:
 
 ```text
-target/OctaEconomy-0.0.3-2026-DEV-8.jar
+target/OctaEconomy-0.0.3-2026.jar
 ```
 
 The Maven project uses `provided` scope for Paper API and Vault API and does not shade dependencies. Paper supplies the SQLite JDBC driver. When `database.type: mysql` is selected, Paper resolves the MySQL connector declared in `plugin.yml`.

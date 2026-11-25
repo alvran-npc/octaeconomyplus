@@ -2,7 +2,7 @@
 
 **Plugin ekonomi serba ada dengan Shop GUI berkategori, Sell GUI, dan Auction House multi-currency. Terintegrasi penuh dengan Vault dan EssentialsX.**
 
-Author: **Alvran** · [GitHub](https://github.com/alvran-npc) · Versi: `0.0.3-2026-DEV-8`
+Author: **Alvran** · [GitHub](https://github.com/alvran-npc) · Versi: `0.0.3-2026`
 
 OctaEconomy adalah proyek plugin Paper orisinal. Plugin ini menyediakan toko yang dapat dikonfigurasi, penjualan item dari inventory, dan rumah lelang berbasis database tanpa memerlukan plugin shop atau auction lain.
 
@@ -17,7 +17,7 @@ OctaEconomy adalah proyek plugin Paper orisinal. Plugin ini menyediakan toko yan
 - Harga dinamis dan batas jual item harian opsional (keduanya nonaktif secara default).
 - Listing Auction House disimpan menggunakan SQLite secara default, dengan dukungan konfigurasi MySQL/MariaDB.
 - Listing lelang multi-currency dengan tema visual Nether, Overworld, Ocean, dan The End, biaya listing, pajak, batas listing, kedaluwarsa, pembatalan, pencarian, dan menu konfirmasi.
-- Diskon shop musiman dari `shops/discounts.yml`, dengan rentang tanggal opsional dan filter kategori/item. Harga diskon tampil pada lore ringkas dan digunakan dalam transaksi pembelian.
+- Diskon shop musiman dari `shops/discount.yml`, dengan rentang tanggal opsional dan filter kategori/item. Harga diskon tampil pada lore ringkas dan digunakan dalam transaksi pembelian.
 |---|---|
 | Server | Paper 1.21.x (plugin memakai deklarasi kompatibilitas Bukkit `api-version: '1.20'`) |
 | Java | Java 21 |
@@ -25,7 +25,7 @@ OctaEconomy adalah proyek plugin Paper orisinal. Plugin ini menyediakan toko yan
 | Plugin opsional | MMOItems, ExcellentEconomy, SmartSpawner |
 1. Pasang Java 21 dan server Paper 1.21.x yang didukung.
 2. Pasang dan jalankan Vault serta EssentialsX. Pastikan EssentialsX mendaftarkan provider ekonomi melalui Vault.
-3. Salin `OctaEconomy-0.0.3-2026-DEV-8.jar` ke direktori `plugins/` server.
+3. Salin `OctaEconomy-0.0.3-2026.jar` ke direktori `plugins/` server.
 - `/shop blocks` membuka kategori `blocks` secara langsung.
 - `/shop search diamond` menampilkan item toko yang cocok.
 - Klik item untuk membuka pemilih jumlah. Pemilih menyediakan 1, 16, 32, 64, serta kontrol plus/minus untuk jumlah khusus.
@@ -49,7 +49,7 @@ Harga otomatis adalah harga awal dari bagian `auto-pricing` setiap kategori. Tam
 
 ### Menambahkan item ke kategori toko
 
-Buka `plugins/OctaEconomy/shop/blocks.yml`, lalu tambahkan entry di bawah `items`:
+Buka `plugins/OctaEconomy/shops/category/blocks.yml`, lalu tambahkan entry di bawah `items`:
 
 ```yaml
 items:
@@ -64,7 +64,7 @@ Gunakan `-1` atau hilangkan harga untuk menonaktifkan jenis transaksi tersebut. 
 
 ### Menambahkan kategori baru
 
-Buat file YAML baru di `plugins/OctaEconomy/shop/`, misalnya `ores.yml`:
+Buat file YAML baru di `plugins/OctaEconomy/shops/category/`, misalnya `ores.yml`:
 
 ```yaml
 category:
@@ -159,7 +159,9 @@ Pada startup pertama dan setiap `/octaeconomy reload`, OctaEconomy memperluas se
 - `database.sqlite-file`: lokasi SQLite relatif terhadap folder data plugin.
 - `database.mysql`: pengaturan koneksi MySQL.
 - `economy.default-currency`: mata uang yang digunakan jika item shop atau command lelang tidak menyebutkannya.
+- Pengaturan Shop kini berada di bagian `shop:` pada `config.yml` (sebelumnya `shops/settings.yml`).
 - `shop.click-actions`: aksi klik kiri dan kanan (`buy` atau `sell`).
+- `shop.sorting`: `mode` (`grouped`, `alphabetical`, `file`) dan `alphabetical-categories` (default `spawners`, `mobs_drop`, `redstone`). Mode grouped menjaga item terkait tetap berdekatan, misalnya semua item oak berdampingan.
 - `shop.dynamic-price`: batas fluktuasi dan recovery harga opsional; nonaktif secara default.
 - `shop.daily-limit`: jumlah default dan batas jumlah harian per item opsional; nonaktif secara default.
 - `shop.sell-multiplier.enabled`: mengaktifkan multiplier jual berbasis permission.
@@ -172,15 +174,15 @@ Pada startup pertama dan setiap `/octaeconomy reload`, OctaEconomy memperluas se
 
 ```text
 plugins/OctaEconomy/
-├── config.yml
+├── config.yml                      # opsi umum + pengaturan Shop (shop:)
 ├── data/
-│   ├── Playerdata.yml
+│   ├── PlayerData.yml
 │   └── database.db                 # dibuat SQLite saat startup pertama
-├── lang/                           # en.yml, id.yml, zh.yml
+├── lang/
+│   └── message/                    # en.yml, id.yml, zh.yml
 ├── shops/
-│   ├── settings.yml
-│   └── discounts.yml
-├── shop/                           # file kategori: blocks.yml, redstone.yml, dll.
+│   ├── discount.yml
+│   └── category/                   # blocks.yml, redstone.yml, spawners.yml, dll.
 ├── auctions/
 │   ├── auctions.yml
 │   └── theme.yml
@@ -189,7 +191,7 @@ plugins/OctaEconomy/
 │   ├── animation/roulette.yml
 │   └── games/roulette.yml
 ├── gui/
-│   ├── shop.yml
+│   ├── shop.yml                    # teks GUI Shop/Sell, template lore kategori + item
 │   └── auction.yml
 └── integrations/
     ├── discordsrv.yml
@@ -197,16 +199,18 @@ plugins/OctaEconomy/
     └── saweria-tebex.yml
 ```
 
-Plugin membuat `data/database.db` melalui SQLite saat database diinisialisasi; file database biner memang tidak disertakan di dalam JAR source. Dua file YAML Discord disediakan untuk pengaturan integrasi mendatang dan nonaktif secara default. Callback masuk Saweria/Tebex memakai file terpisah `integrations/saweria-tebex.yml`. Saat upgrade dari DEV-5, file lama disalin ke lokasi baru hanya jika file tujuan belum ada; file lama tetap disimpan sebagai salinan pemulihan.
+Plugin membuat `data/database.db` melalui SQLite saat database diinisialisasi; file database biner memang tidak disertakan di dalam JAR source. Dua file YAML Discord disediakan untuk pengaturan integrasi mendatang dan nonaktif secara default. Callback masuk Saweria/Tebex memakai file terpisah `integrations/saweria-tebex.yml`. Saat upgrade, tata letak lama (`shop/*.yml`, `shops/settings.yml`, `shops/discounts.yml`, `lang/*.yml`, `data/Playerdata.yml`) dipindahkan otomatis ke lokasi di atas. Tidak ada yang ditimpa: jika tujuan sudah ada, file lama dibiarkan, dan nilai `shops/settings.yml` lama digabungkan ke `config.yml`.
 
-### `gui/shop.yml` and `auctions/theme.yml`
+### `gui/shop.yml` dan `auctions/theme.yml`
 
+- **Lore yang dapat diedit:** `gui/shop.yml` → `shop.lore.categories.main-menu`, `shop.lore.categories.tab`, `shop.lore.shop-items`, dan `shop.player-info` mengatur setiap baris yang dibaca pemain, dengan placeholder seperti `{items}`, `{buy-range}`, `{buy-price}`, `{sell-price}`, `{currency}`, `{player}`, `{rank}`, `{balance}` serta baris blok `{buy}` / `{sell}` / `{click-hints}`. Ubah lalu jalankan `/octaeconomy reload`; tidak perlu mengubah source.
+- `shop.currency-names` memetakan id mata uang ke teks yang dilihat pemain (`vault: money`).
 - `shop.background` dan `shop.accent` mengatur panel di sekitar trapesium simetris 3-5-7-7. Baris yang belum penuh diposisikan secara simetris; jumlah item genap diseimbangkan di kiri dan kanan dengan satu slot tengah yang sengaja kosong, bukan menempel ke kiri.
 - `shop.category-background` dan `shop.category-accent` mengatur bingkai halaman kategori. Menu utama Shop tetap trapesium 3-5-7-7; halaman kategori memakai tujuh tab di slot 1–7, navigasi kelompok di slot 0 dan 8, serta grid item persegi 4x7.
 - `auction.theme` menetapkan tema default: `nether`, `overworld`, `ocean`, atau `the_end`. Pemain dapat menggantinya lewat tombol tema di footer Auction House, atau menggunakan `/ah theme` dan `/ah theme <dimension>`. Tema langsung diterapkan dan berlaku selama sesi pemain; setelah reconnect, plugin menggunakan tema default dari konfigurasi.
 - Setiap tema memiliki `title` berwarna sesuai tema tetapi tetap bertuliskan `Auction House`, serta `background`, `accent`, `emblem`, `tagline`, dan `price-style` pada `auction.themes.<theme>`. Warna legacy atau MiniMessage yang sudah ada di nama item/kategori dipertahankan tanpa dibungkus palet warna lain. Lore GUI secara eksplisit tidak italic.
 
-### `shops/discounts.yml`
+### `shops/discount.yml`
 
 Aktifkan diskon musiman dengan mengatur `enabled: true` di bagian utama, memilih key pada `active`, lalu mengatur `enabled: true` pada offer tersebut. Contoh:
 
@@ -236,7 +240,7 @@ Casino hanya menggunakan Vault. Atur `minimum-bet`, `maximum-bet`, tiga nilai `c
 
 ### File bahasa
 
-Edit `lang/en.yml`, `lang/id.yml`, dan `lang/zh.yml`. Semua key pesan saat ini tersedia di ketiga file bahasa. Atur `language: id` untuk Bahasa Indonesia atau `language: zh` untuk Chinese Simplified. Key yang hilang akan menggunakan fallback English.
+Edit `lang/message/en.yml`, `lang/message/id.yml`, dan `lang/message/zh.yml`. Semua key pesan saat ini tersedia di ketiga file bahasa. Atur `language: id` untuk Bahasa Indonesia atau `language: zh` untuk Chinese Simplified. Key yang hilang akan menggunakan fallback English.
 
 ## Integrasi
 
@@ -297,7 +301,7 @@ Workflow GitHub Actions memasang Maven secara langsung dan tidak bergantung pada
 File output:
 
 ```text
-target/OctaEconomy-0.0.3-2026-DEV-8.jar
+target/OctaEconomy-0.0.3-2026.jar
 ```
 
 Proyek Maven menggunakan scope `provided` untuk Paper API dan Vault API serta tidak melakukan shade dependency. Paper menyediakan driver JDBC SQLite. Saat `database.type: mysql` digunakan, Paper memuat konektor MySQL yang dideklarasikan di `plugin.yml`.
