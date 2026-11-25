@@ -6,7 +6,7 @@
 
     <groupId>dev.alvran</groupId>
     <artifactId>OctaEconomy</artifactId>
-    <version>0.0.3-2026-DEV-8</version>
+    <version>0.0.3-2026</version>
     <packaging>jar</packaging>
 
     <name>OctaEconomy</name>
