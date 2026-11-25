@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.0.3-2026-DEV-7] - 2026-11-25
+### Added
+- Player Information card (name, rank, Vault balance) at the bottom center of the Shop main menu and quantity menu. Rank comes from the Vault primary group and falls back to `Member`.
+- Optional `gui/shop.yml` keys: `shop.frame-corner`, `shop.player-info.default-rank`, `shop.player-info.currency-label` (merged into existing files automatically).
+- `VaultHook#primaryGroup(Player)` using Vault's Permission service, safe when no permission provider exists.
+
+### Changed
+- Shop main/quantity frame is now a clean single-pane border with accented corners only; jewel ornaments on the corners and bottom row were removed.
+- Category card and category tab lore redesigned with divider lines, unique symbols, and separate Buy/Sell lines.
+- Main menu: Close moved to slot 47, Search to slot 51. Quantity menu: Back moved to slot 47, Close to slot 51. Previous/Next page buttons appear only when a page exists.
+
+### Fixed
+- Removed unused frame code and a stale layout comment in `ShopModule`.
+- Synchronized version strings in `pom.xml`, the CI workflow, and both READMEs.
+
 ## [0.0.3-2026-DEV-6] - 2026-11-25
 ### Added
 - Premium Shop frame with ornamental amethyst/prismarine corners, double-rule separators, a dedicated title rail, uninterrupted side gutters, and a reserved inner 4x7 category item area.

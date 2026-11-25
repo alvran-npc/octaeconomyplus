@@ -1,0 +1,95 @@
+# The plugin expands this seed file into a complete editable catalogue on first startup/reload.
+category:
+  id: spawners
+  display-name: "&cSpawners"
+  icon: SPAWNER
+  slot: 21
+  permission: ""
+  catalog-defaults:
+    buy-base: 15000.0
+    sell-ratio: 0.00
+    currency: vault
+items:
+  zombie_spawner:
+    spawner:
+      entity: ZOMBIE
+      smart: true
+    buy-price: 25000.0
+    sell-price: -1
+    currency: vault
+  skeleton_spawner:
+    spawner:
+      entity: SKELETON
+    buy-price: 25000.0
+    sell-price: -1
+    currency: vault
+  creeper_spawner:
+    spawner:
+      entity: CREEPER
+    buy-price: 30000.0
+    sell-price: -1
+    currency: vault
+  spider_spawner:
+    spawner:
+      entity: SPIDER
+    buy-price: 22000.0
+    sell-price: -1
+    currency: vault
+  cave_spider_spawner:
+    spawner:
+      entity: CAVE_SPIDER
+    buy-price: 28000.0
+    sell-price: -1
+    currency: vault
+  enderman_spawner:
+    spawner:
+      entity: ENDERMAN
+    buy-price: 50000.0
+    sell-price: -1
+    currency: vault
+  blaze_spawner:
+    spawner:
+      entity: BLAZE
+    buy-price: 45000.0
+    sell-price: -1
+    currency: vault
+  cow_spawner:
+    spawner:
+      entity: COW
+    buy-price: 15000.0
+    sell-price: -1
+    currency: vault
+  pig_spawner:
+    spawner:
+      entity: PIG
+    buy-price: 13000.0
+    sell-price: -1
+    currency: vault
+  sheep_spawner:
+    spawner:
+      entity: SHEEP
+    buy-price: 14000.0
+    sell-price: -1
+    currency: vault
+  chicken_spawner:
+    spawner:
+      entity: CHICKEN
+    buy-price: 12000.0
+    sell-price: -1
+    currency: vault
+  slime_spawner:
+    spawner:
+      entity: SLIME
+    buy-price: 35000.0
+    sell-price: -1
+    currency: vault
+  witch_spawner:
+    spawner:
+      entity: WITCH
+    buy-price: 38000.0
+    sell-price: -1
+
+# On first startup/reload, every spawner supported by this Paper server is written into items.
+# Each entry receives explicit buy-price, sell-price and currency fields; existing prices are kept.
+    currency: vault
+auto-include-entities: true

@@ -1,0 +1,8 @@
+# Visual-only Roulette animation. The result is fixed before the animation begins.
+enabled: true
+frames: 42
+start-interval-ticks: 1
+interval-increase-every: 5
+interval-increase-ticks: 1
+maximum-interval-ticks: 8
+display-slot: 4

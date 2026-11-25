@@ -1,0 +1,15 @@
+shop:
+  click-actions:
+    left: buy
+    right: sell
+  dynamic-price:
+    enabled: false
+    fluctuation-percent: 2.0
+    min-multiplier: 0.75
+    max-multiplier: 1.5
+    recovery-per-hour: 0.02
+  daily-limit:
+    enabled: false
+    default-amount: 0
+  sell-multiplier:
+    enabled: true

@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.0.3-2026-DEV-7] - 2026-11-25
+### Ditambahkan
+- Kartu Player Information (nama, rank, saldo Vault) di tengah bawah menu utama Shop dan menu jumlah. Rank diambil dari primary group Vault dan memakai `Member` sebagai cadangan.
+- Kunci opsional `gui/shop.yml`: `shop.frame-corner`, `shop.player-info.default-rank`, `shop.player-info.currency-label` (digabung otomatis ke file lama).
+- `VaultHook#primaryGroup(Player)` memakai layanan Permission Vault, aman bila tidak ada provider permission.
+
+### Diubah
+- Bingkai menu utama/jumlah Shop kini satu lapis yang rapi dengan aksen hanya di sudut; ornamen permata di sudut dan baris bawah dihapus.
+- Lore kartu kategori dan tab kategori didesain ulang dengan garis pemisah, simbol unik, dan baris Buy/Sell terpisah.
+- Menu utama: Close pindah ke slot 47, Search ke slot 51. Menu jumlah: Back pindah ke slot 47, Close ke slot 51. Tombol Sebelumnya/Berikutnya hanya muncul bila halaman tersedia.
+
+### Diperbaiki
+- Menghapus kode bingkai yang tidak terpakai dan komentar tata letak yang usang di `ShopModule`.
+- Menyelaraskan versi di `pom.xml`, workflow CI, dan kedua README.
+
 ## [0.0.3-2026-DEV-6] - 2026-11-25
 ### Ditambahkan
 - Bingkai Shop premium dengan ornamen sudut amethyst/prismarine, garis pemisah ganda, header khusus, rail samping utuh, dan area item kategori 4×7.

@@ -6,11 +6,11 @@
 
     <groupId>dev.alvran</groupId>
     <artifactId>OctaEconomy</artifactId>
-    <version>0.0.3-2026-DEV-6</version>
+    <version>0.0.3-2026-DEV-7</version>
     <packaging>jar</packaging>
 
     <name>OctaEconomy</name>
-    <description>An all-in-one economy plugin featuring a categorized Shop GUI, Sell GUI, and a multi-currency Auction House. Fully integrated with Vault and EssentialsX.</description>
+    <description>An all-in-one economy plugin with a polished categorized Shop GUI (clean frame, player info card, styled category lore), Sell GUI, a multi-currency Auction House, and a roleplay Casino. Fully integrated with Vault and EssentialsX.</description>
     <url>https://github.com/alvran-npc</url>
 
     <properties>

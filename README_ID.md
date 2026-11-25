@@ -2,7 +2,7 @@
 
 **Plugin ekonomi serba ada dengan Shop GUI berkategori, Sell GUI, dan Auction House multi-currency. Terintegrasi penuh dengan Vault dan EssentialsX.**
 
-Author: **Alvran** · [GitHub](https://github.com/alvran-npc) · Versi: `0.0.3-2026-DEV-6`
+Author: **Alvran** · [GitHub](https://github.com/alvran-npc) · Versi: `0.0.3-2026-DEV-7`
 
 OctaEconomy adalah proyek plugin Paper orisinal. Plugin ini menyediakan toko yang dapat dikonfigurasi, penjualan item dari inventory, dan rumah lelang berbasis database tanpa memerlukan plugin shop atau auction lain.
 
@@ -25,7 +25,7 @@ OctaEconomy adalah proyek plugin Paper orisinal. Plugin ini menyediakan toko yan
 | Plugin opsional | MMOItems, ExcellentEconomy, SmartSpawner |
 1. Pasang Java 21 dan server Paper 1.21.x yang didukung.
 2. Pasang dan jalankan Vault serta EssentialsX. Pastikan EssentialsX mendaftarkan provider ekonomi melalui Vault.
-3. Salin `OctaEconomy-0.0.3-2026-DEV-6.jar` ke direktori `plugins/` server.
+3. Salin `OctaEconomy-0.0.3-2026-DEV-7.jar` ke direktori `plugins/` server.
 - `/shop blocks` membuka kategori `blocks` secara langsung.
 - `/shop search diamond` menampilkan item toko yang cocok.
 - Klik item untuk membuka pemilih jumlah. Pemilih menyediakan 1, 16, 32, 64, serta kontrol plus/minus untuk jumlah khusus.
@@ -297,7 +297,7 @@ Workflow GitHub Actions memasang Maven secara langsung dan tidak bergantung pada
 File output:
 
 ```text
-target/OctaEconomy-0.0.3-2026-DEV-6.jar
+target/OctaEconomy-0.0.3-2026-DEV-7.jar
 ```
 
 Proyek Maven menggunakan scope `provided` untuk Paper API dan Vault API serta tidak melakukan shade dependency. Paper menyediakan driver JDBC SQLite. Saat `database.type: mysql` digunakan, Paper memuat konektor MySQL yang dideklarasikan di `plugin.yml`.
@@ -326,6 +326,13 @@ OctaEconomy **100% gratis**. Penjualan ulang, akses paywall, akses yang mensyara
 - Dibuat untuk ekosistem Paper/Bukkit API dan ekonomi Vault.
 - MMOItems, ExcellentEconomy, dan SmartSpawner merupakan integrasi runtime opsional.
 
+
+## Pembaruan v0.0.3-2026-DEV-7
+- Menu utama Shop dan menu jumlah memakai bingkai satu lapis yang rapi: satu rail menerus di keempat sisi, dengan aksen hanya pada empat sudut. Ornamen permata lama yang membuat bingkai terlihat berantakan dihapus.
+- Kartu **Player Information** baru di tengah bawah menu utama Shop dan menu jumlah, menampilkan nama, rank (primary group Vault, cadangan `Member`), dan saldo Vault pemain.
+- Lore kartu kategori dan tab kategori didesain ulang dengan simbol unik (`✦ ❖ ◆ ◇ ▸ ➜`), garis pemisah, dan baris rentang Buy/Sell terpisah.
+- Tombol baris bawah dipindahkan dari sudut: Close di slot 47 dan Search di slot 51 pada menu utama; Back di slot 47 dan Close di slot 51 pada menu jumlah. Tombol halaman Sebelumnya/Berikutnya hanya muncul bila halaman tersedia.
+- Kunci opsional baru di `gui/shop.yml`: `shop.frame-corner`, `shop.player-info.default-rank`, `shop.player-info.currency-label`. Kunci ini ditambahkan otomatis ke file lama tanpa menimpa pengaturan Anda.
 
 ## Pembaruan v0.0.3-2026-DEV-6
 - `/ah sell <price> [currency] [expired]` mendukung durasi seperti `12h`, `3d`, dan `1w`. Durasi khusus memerlukan permission `octaeconomy.auction.expire.custom` dan dibatasi konfigurasi `auctions/auctions.yml`.

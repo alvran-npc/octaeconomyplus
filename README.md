@@ -2,7 +2,7 @@
 
 **An all-in-one economy plugin featuring a categorized Shop GUI, Sell GUI, and a multi-currency Auction House. Fully integrated with Vault and EssentialsX.**
 
-Author: **Alvran** · [GitHub](https://github.com/alvran-npc) · Version: `0.0.3-2026-DEV-6`
+Author: **Alvran** · [GitHub](https://github.com/alvran-npc) · Version: `0.0.3-2026-DEV-7`
 
 OctaEconomy is an original Paper plugin project. It provides a configurable shop, inventory selling, and a database-backed auction house without requiring another shop or auction plugin.
 
@@ -25,7 +25,7 @@ OctaEconomy is an original Paper plugin project. It provides a configurable shop
 | Optional plugins | MMOItems, ExcellentEconomy, SmartSpawner |
 1. Install Java 21 and a supported Paper 1.21.x server.
 2. Install and start Vault and EssentialsX. Confirm that EssentialsX registers an economy provider through Vault.
-3. Copy `OctaEconomy-0.0.3-2026-DEV-6.jar` into the server's `plugins/` directory.
+3. Copy `OctaEconomy-0.0.3-2026-DEV-7.jar` into the server's `plugins/` directory.
 - `/shop blocks` opens the `blocks` category directly.
 - `/shop search diamond` opens matching shop entries.
 - Click an item to open its quantity selector. The selector offers 1, 16, 32, 64, and a plus/minus custom quantity control.
@@ -301,7 +301,7 @@ The GitHub Actions workflow installs Maven directly and does not depend on a Mav
 The output is:
 
 ```text
-target/OctaEconomy-0.0.3-2026-DEV-6.jar
+target/OctaEconomy-0.0.3-2026-DEV-7.jar
 ```
 
 The Maven project uses `provided` scope for Paper API and Vault API and does not shade dependencies. Paper supplies the SQLite JDBC driver. When `database.type: mysql` is selected, Paper resolves the MySQL connector declared in `plugin.yml`.
@@ -330,6 +330,13 @@ OctaEconomy is **100% free**. Resale, paywall access, mandatory-donation access,
 - Built for the Paper/Bukkit API and Vault economy ecosystem.
 - MMOItems, ExcellentEconomy, and SmartSpawner are optional runtime integrations.
 
+
+## v0.0.3-2026-DEV-7 updates
+- Shop main menu and quantity menu use a clean single-pane border: one continuous rail on all four sides, with only the four corners accented. The old jewel ornaments that made the frame look messy were removed.
+- New **Player Information** card at the bottom center of the Shop main menu and the quantity menu, showing the viewer's name, rank (Vault primary group, `Member` fallback) and Vault balance.
+- Category cards and category tabs have redesigned lore with unique symbols (`✦ ❖ ◆ ◇ ▸ ➜`), divider lines, and separate Buy/Sell range lines.
+- Bottom-row buttons moved off the corners: Close is now at slot 47 and Search at slot 51 on the main menu; Back is at slot 47 and Close at slot 51 on the quantity menu. Previous/Next page buttons only appear when a page exists.
+- New optional keys in `gui/shop.yml`: `shop.frame-corner`, `shop.player-info.default-rank`, `shop.player-info.currency-label`. They are added automatically to existing files without overwriting your settings.
 
 ## v0.0.3-2026-DEV-6 updates
 - `/ah sell <price> [currency] [expired]` supports duration tokens such as `12h`, `3d`, and `1w`. Custom duration requires `octaeconomy.auction.expire.custom` and is bounded by `auctions/auctions.yml`.
