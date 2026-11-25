@@ -1,7 +1,0 @@
-# Optional DiscordSRV bridge settings. Disabled by default.
-enabled: false
-# No DiscordSRV API is called while disabled.
-relay:
-  auction-listings: false
-  shop-transactions: false
-  donation-notifications: false
