@@ -108,9 +108,9 @@ public final class ShopModule implements Module {
         });
     }
     @Override public void reload() {
-        guiConfig = YamlConfiguration.loadConfiguration(new File(plugin.getDataFolder(), "gui/shop.yml"));
-        discountsConfig = YamlConfiguration.loadConfiguration(new File(plugin.getDataFolder(), "shops/discounts.yml"));
-        shopSettings = YamlConfiguration.loadConfiguration(new File(plugin.getDataFolder(), "shops/settings.yml"));
+        guiConfig = YamlConfiguration.loadConfiguration(new File(plugin.getDataFolder(), "GUI/Shop.yml"));
+        discountsConfig = YamlConfiguration.loadConfiguration(new File(plugin.getDataFolder(), "Shops/Settings/discount.yml"));
+        shopSettings = plugin.getConfig();
         discountConfigWarningLogged = false;
         manager.reload();
     }
@@ -212,12 +212,16 @@ public final class ShopModule implements Module {
             ItemMeta meta = icon.getItemMeta();
             // Preserve user-defined category colors rather than adding another palette.
             meta.displayName(ui(category.displayName()));
-            List<Component> categoryLore = new ArrayList<>();
-            categoryLore.add(ui(LORE_DIVIDER));
-            categoryLore.add(ui("<aqua>❖ <gray>Items <dark_gray>▸ <white>" + manager.items(category.id()).size()));
-            categoryLore.addAll(categoryPriceRangeLore(category.id()));
-            categoryLore.add(ui(LORE_DIVIDER));
-            categoryLore.add(ui("<yellow>➜ <white>Click to browse"));
+            Map<String, String> loreValues = categoryLoreValues(category.id());
+            List<Component> categoryLore = new ArrayList<>(configuredLore("shop.categories.lore", loreValues, List.of(
+                    "{divider}",
+                    "<aqua>❖ <gray>Items <dark_gray>▸ <white>{items}",
+                    "<green>◆ <gray>Buy range <dark_gray>▸ <white>{buy_range}",
+                    "<yellow>➜ <white>Click to browse"
+            )));
+            categoryLore.addAll(configuredLore("sell.categories.lore", loreValues, List.of(
+                    "<red>◇ <gray>Sell range <dark_gray>▸ <white>{sell_range}"
+            )));
             meta.lore(categoryLore);
             setNormalLore(meta);
             icon.setItemMeta(meta);
@@ -300,12 +304,11 @@ public final class ShopModule implements Module {
             ItemMeta meta = icon.getItemMeta();
             meta.displayName(ui(tab.displayName()));
             boolean currentTab = !searchMode && tab.id().equalsIgnoreCase(category);
-            List<Component> tabLore = new ArrayList<>();
-            tabLore.add(ui(LORE_DIVIDER));
-            if (currentTab) tabLore.add(ui("<gold>✦ <yellow>Current category"));
-            tabLore.add(ui("<aqua>❖ <gray>Items <dark_gray>▸ <white>" + manager.items(tab.id()).size()));
-            tabLore.add(ui(LORE_DIVIDER));
-            tabLore.add(ui(currentTab ? "<dark_gray>You are here" : "<yellow>➜ <white>Switch category"));
+            Map<String, String> tabValues = categoryLoreValues(tab.id());
+            tabValues.put("tab_status", currentTab ? "<gold>✦ <yellow>Current category" : "<yellow>➜ <white>Switch category");
+            List<Component> tabLore = configuredLore("shop.categories.tab-lore", tabValues, List.of(
+                    "{divider}", "{tab_status}", "<aqua>❖ <gray>Items <dark_gray>▸ <white>{items}"
+            ));
             meta.lore(tabLore);
             if (currentTab) meta.setEnchantmentGlintOverride(true);
             setNormalLore(meta);
@@ -407,7 +410,8 @@ public final class ShopModule implements Module {
         ItemMeta meta = head.getItemMeta();
         if (meta instanceof SkullMeta skull) skull.setOwningPlayer(player);
         meta.displayName(ui("<gold>✦ <white>Player Information <gold>✦"));
-        String currencyLabel = guiConfig.getString("shop.player-info.currency-label", "vault");
+        String currencyLabel = guiConfig.getString("shop.player-info.currency-label", plugin.getConfig().getString("economy.currency-display.vault", "Money"));
+        if (currencyLabel.equalsIgnoreCase("vault")) currencyLabel = plugin.getConfig().getString("economy.currency-display.vault", "Money");
         List<Component> lore = new ArrayList<>();
         lore.add(ui(LORE_DIVIDER));
         lore.add(ui("<aqua>❖ <gray>Name <dark_gray>▸ <white>" + miniEscape(player.getName())));
@@ -510,35 +514,45 @@ public final class ShopModule implements Module {
             meta.displayName(meta.displayName().decoration(TextDecoration.ITALIC, false));
         }
 
-        // Shop previews intentionally use compact commerce lore. The purchased template is never
-        // modified, so original MMOItems/vanilla metadata remains intact in the delivered item.
-        List<Component> lore = new ArrayList<>();
-        lore.add(ui(LORE_DIVIDER));
-        if (item.canBuy()) {
-            BigDecimal regular = dynamicPrice(item, true);
-            DiscountOffer offer = activeDiscount(item);
-            if (offer != null) {
-                BigDecimal discounted = applyDiscount(regular, offer);
-                lore.add(ui("<gray>◆ Was <dark_gray>▸ <red><strikethrough>" + compactText(format(regular), 12) + " " + miniEscape(compactCurrency(item.currency(), 7))));
-                lore.add(ui("<green>◆ Now <dark_gray>▸ <white>" + compactText(format(discounted), 12) + " " + miniEscape(compactCurrency(item.currency(), 7))));
-                lore.add(ui("<gold>✦ " + compactText(offer.displayName(), 12) + " "
-                        + offer.percent().stripTrailingZeros().toPlainString() + "% off"));
-            } else {
-                lore.add(ui("<green>◆ <gray>Buy <dark_gray>▸ <white>" + compactText(format(regular), 12) + " " + miniEscape(compactCurrency(item.currency(), 7))));
-            }
-        } else lore.add(ui("<dark_gray>◆ Buy <dark_gray>▸ <red>Unavailable"));
+        BigDecimal regular = item.canBuy() ? dynamicPrice(item, true) : BigDecimal.ZERO;
+        DiscountOffer offer = item.canBuy() ? activeDiscount(item) : null;
+        BigDecimal discounted = offer == null ? regular : applyDiscount(regular, offer);
+        String currency = miniEscape(compactCurrency(item.currency(), 18));
+        String buyLine = item.canBuy()
+                ? (offer == null
+                    ? "<green>◆ <gray>Buy <dark_gray>▸ <white>" + compactText(format(regular), 12) + " " + currency
+                    : "<green>◆ <gray>Buy <dark_gray>▸ <white>" + compactText(format(discounted), 12) + " " + currency)
+                : "<dark_gray>◆ <gray>Buy <dark_gray>▸ <red>Unavailable";
+        String discountLine = offer == null ? ""
+                : "<gold>✦ <gray>" + miniEscape(compactText(offer.displayName(), 32)) + " <yellow>"
+                    + offer.percent().stripTrailingZeros().toPlainString() + "% off"
+                    + " <dark_gray>(<strikethrough>" + compactText(format(regular), 12) + "</strikethrough>)";
+        String sellLine = item.canSell()
+                ? "<red>◇ <gray>Sell <dark_gray>▸ <white>" + compactText(format(dynamicPrice(item, false)), 12) + " " + currency
+                : "<dark_gray>◇ <gray>Sell <dark_gray>▸ <red>Unavailable";
 
-        if (item.canSell()) lore.add(ui("<red>◇ <gray>Sell <dark_gray>▸ <white>" + compactText(format(dynamicPrice(item, false)), 12) + " " + miniEscape(compactCurrency(item.currency(), 7))));
-        else lore.add(ui("<dark_gray>◇ Sell <dark_gray>▸ <red>Unavailable"));
-        if (showClicks) {
-            String left = shopSettings.getString("shop.click-actions.left", "buy");
-            String right = shopSettings.getString("shop.click-actions.right", "sell");
-            lore.add(ui(LORE_DIVIDER));
-            lore.add(ui("<yellow>➜ <gray>Left-click <dark_gray>▸ <white>" + clickLabel(left, false)));
-            lore.add(ui("<yellow>➜ <gray>Right-click <dark_gray>▸ <white>" + clickLabel(right, false)));
-            lore.add(ui("<yellow>➜ <gray>Shift + Left <dark_gray>▸ <white>" + clickLabel(left, true)));
-        }
+        Map<String, String> values = new LinkedHashMap<>();
+        values.put("divider", LORE_DIVIDER);
+        values.put("buy_line", buyLine);
+        values.put("discount_line", discountLine);
+        values.put("sell_line", sellLine);
+        values.put("currency", currency);
+        values.put("buy_price", item.canBuy() ? format(discounted) : "—");
+        values.put("regular_buy_price", item.canBuy() ? format(regular) : "—");
+        values.put("sell_price", item.canSell() ? format(dynamicPrice(item, false)) : "—");
+        values.put("discount_percent", offer == null ? "" : offer.percent().stripTrailingZeros().toPlainString());
+        values.put("discount_name", offer == null ? "" : miniEscape(offer.displayName()));
+        values.put("left_click_line", showClicks ? "<yellow>➜ <gray>Left-click <dark_gray>▸ <white>" + clickLabel(shopSettings.getString("shop.click-actions.left", "buy"), false) : "");
+        values.put("right_click_line", showClicks ? "<yellow>➜ <gray>Right-click <dark_gray>▸ <white>" + clickLabel(shopSettings.getString("shop.click-actions.right", "sell"), false) : "");
+        values.put("shift_left_click_line", showClicks ? "<yellow>➜ <gray>Shift + Left <dark_gray>▸ <white>" + clickLabel(shopSettings.getString("shop.click-actions.left", "buy"), true) : "");
+
+        List<Component> lore = new ArrayList<>(configuredLore("shop.shop-items.lore", values, List.of(
+                "{divider}", "{buy_line}", "{discount_line}", "{divider}",
+                "{left_click_line}", "{right_click_line}", "{shift_left_click_line}"
+        )));
+        lore.addAll(configuredLore("sell.shop-items.lore", values, List.of("{sell_line}")));
         meta.lore(lore);
+        setNormalLore(meta);
         display.setItemMeta(meta);
         return display;
     }
@@ -551,7 +565,12 @@ public final class ShopModule implements Module {
     }
 
     private String compactCurrency(String currency, int max) {
-        return compactText(currency == null ? "vault" : currency, max);
+        String id = currency == null || currency.isBlank() ? "vault" : currency;
+        String display = plugin.getConfig().getString("economy.currency-display." + id);
+        if (display == null || display.isBlank()) {
+            display = id.equalsIgnoreCase("vault") ? "Money" : prettyMaterial(id.replace('-', '_'));
+        }
+        return compactText(display, max);
     }
 
     private String prettyMaterial(String material) {
@@ -609,15 +628,33 @@ public final class ShopModule implements Module {
         return original.multiply(BigDecimal.ONE.subtract(fraction)).setScale(2, RoundingMode.HALF_UP);
     }
 
-    private List<Component> categoryPriceRangeLore(String categoryId) {
+    private Map<String, String> categoryLoreValues(String categoryId) {
         List<ShopItem> categoryItems = manager.items(categoryId);
         List<ShopItem> buyable = categoryItems.stream().filter(ShopItem::canBuy).toList();
         List<ShopItem> sellable = categoryItems.stream().filter(ShopItem::canSell).toList();
-        List<Component> lines = new ArrayList<>();
-        if (!buyable.isEmpty()) lines.add(ui("<green>◆ <gray>Buy <dark_gray>▸ <green>" + priceRange(buyable, true)));
-        if (!sellable.isEmpty()) lines.add(ui("<red>◇ <gray>Sell <dark_gray>▸ <red>" + priceRange(sellable, false)));
-        if (lines.isEmpty()) lines.add(ui("<gray>◇ Prices <dark_gray>▸ <dark_gray>Not configured"));
-        return lines;
+        Map<String, String> values = new LinkedHashMap<>();
+        values.put("divider", LORE_DIVIDER);
+        values.put("items", Integer.toString(categoryItems.size()));
+        values.put("buy_count", Integer.toString(buyable.size()));
+        values.put("sell_count", Integer.toString(sellable.size()));
+        values.put("buy_range", priceRange(buyable, true));
+        values.put("sell_range", priceRange(sellable, false));
+        return values;
+    }
+
+    private List<Component> configuredLore(String path, Map<String, String> values, List<String> fallback) {
+        List<String> templates = guiConfig.getStringList(path);
+        if (templates.isEmpty()) templates = fallback;
+        List<Component> rendered = new ArrayList<>(templates.size());
+        for (String template : templates) {
+            if (template == null || template.isBlank()) continue;
+            String line = template;
+            for (Map.Entry<String, String> entry : values.entrySet()) {
+                line = line.replace("{" + entry.getKey() + "}", entry.getValue());
+            }
+            if (!line.isBlank()) rendered.add(ui(line));
+        }
+        return rendered;
     }
 
     private String priceRange(List<ShopItem> source, boolean buying) {
@@ -730,7 +767,7 @@ public final class ShopModule implements Module {
         inv.setItem(30, button(Material.NAME_TAG, "<yellow>Selected: " + quantity));
         inv.setItem(33, button(Material.LIME_DYE, "<green>+ 1"));
         BigDecimal total = purchaseUnitPrice(item).multiply(BigDecimal.valueOf(quantity)).setScale(2, RoundingMode.HALF_UP);
-        inv.setItem(31, button(Material.EMERALD, "<green>Confirm purchase", "<gray>Total: " + format(total) + " " + item.currency()));
+        inv.setItem(31, button(Material.EMERALD, "<green>Confirm purchase", "<gray>Total: " + format(total) + " " + compactCurrency(item.currency(), 18)));
         inv.setItem(SLOT_LEFT_BUTTON, button(Material.ARROW, "<yellow>« <white>Back")); inv.setItem(SLOT_RIGHT_BUTTON, button(Material.BARRIER, "<red>✖ <white>Close"));
         player.openInventory(inv);
     }
