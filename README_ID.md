@@ -2,7 +2,7 @@
 
 **Plugin ekonomi serba ada dengan Shop GUI berkategori, Sell GUI, dan Auction House multi-currency. Terintegrasi penuh dengan Vault dan EssentialsX.**
 
-Author: **Alvran** · [GitHub](https://github.com/alvran-npc) · Versi: `0.0.3-2026-DEV-7`
+Author: **Alvran** · [GitHub](https://github.com/alvran-npc) · Versi: `0.0.3-2026-DEV-8`
 
 OctaEconomy adalah proyek plugin Paper orisinal. Plugin ini menyediakan toko yang dapat dikonfigurasi, penjualan item dari inventory, dan rumah lelang berbasis database tanpa memerlukan plugin shop atau auction lain.
 
@@ -25,7 +25,7 @@ OctaEconomy adalah proyek plugin Paper orisinal. Plugin ini menyediakan toko yan
 | Plugin opsional | MMOItems, ExcellentEconomy, SmartSpawner |
 1. Pasang Java 21 dan server Paper 1.21.x yang didukung.
 2. Pasang dan jalankan Vault serta EssentialsX. Pastikan EssentialsX mendaftarkan provider ekonomi melalui Vault.
-3. Salin `OctaEconomy-0.0.3-2026-DEV-7.jar` ke direktori `plugins/` server.
+3. Salin `OctaEconomy-0.0.3-2026-DEV-8.jar` ke direktori `plugins/` server.
 - `/shop blocks` membuka kategori `blocks` secara langsung.
 - `/shop search diamond` menampilkan item toko yang cocok.
 - Klik item untuk membuka pemilih jumlah. Pemilih menyediakan 1, 16, 32, 64, serta kontrol plus/minus untuk jumlah khusus.
@@ -297,7 +297,7 @@ Workflow GitHub Actions memasang Maven secara langsung dan tidak bergantung pada
 File output:
 
 ```text
-target/OctaEconomy-0.0.3-2026-DEV-7.jar
+target/OctaEconomy-0.0.3-2026-DEV-8.jar
 ```
 
 Proyek Maven menggunakan scope `provided` untuk Paper API dan Vault API serta tidak melakukan shade dependency. Paper menyediakan driver JDBC SQLite. Saat `database.type: mysql` digunakan, Paper memuat konektor MySQL yang dideklarasikan di `plugin.yml`.
@@ -326,6 +326,14 @@ OctaEconomy **100% gratis**. Penjualan ulang, akses paywall, akses yang mensyara
 - Dibuat untuk ekosistem Paper/Bukkit API dan ekonomi Vault.
 - MMOItems, ExcellentEconomy, dan SmartSpawner merupakan integrasi runtime opsional.
 
+
+## Pembaruan v0.0.3-2026-DEV-8
+- **Menu roda Roulette:** menekan SPIN kini menarik taruhan dan membuka GUI roda tersendiri. Cincin 26 kantong berwarna (urutan roda Eropa) berputar melewati penunjuk tetap di tengah atas, melambat, lalu berhenti pada hasil yang sudah ditentukan, lengkap dengan suara tik dan pengumuman menang/kalah sebelum kembali ke meja. Atur di `casino/animation/roulette.yml` (`laps`, `start-interval-ticks`, `maximum-interval-ticks`, `slowdown-steps`, `result-hold-ticks`).
+- Menutup menu roda saat berputar kini langsung menampilkan hasil yang sudah terkunci, bukan mengembalikan taruhan, sehingga putaran tidak bisa dibatalkan ketika terlihat kalah. Disconnect dan shutdown plugin tetap mengembalikan taruhan.
+- Meja Roulette didesain ulang: taruhan luar simetris di sekitar angka nol hijau, angka berupa blok beton berwarna dengan jumlah stack sebagai nomor, taruhan/chip terpilih menyala, dan baris bawah berisi chip, SPIN, taruhan saat ini, hasil terakhir, dan Back dengan sudut dekoratif.
+- Menu utama Casino dan gerbang 21+ memakai tata letak berbingkai, kartu dompet, dan teks peringatan yang dibungkus per baris agar tidak lagi keluar dari layar.
+- Halaman kategori Shop memakai bingkai bersih DEV-7: tab kategori di rail atas, Back/Search/Previous/Page/Next/Player Information/Close di baris bawah, tab kategori aktif menyala, dan panah tab/halaman hanya muncul bila tersedia.
+- Lore item Shop didesain ulang dengan pemisah dan simbol, dan petunjuk klik kini mengikuti `click-actions` yang dikonfigurasi, bukan selalu kiri=beli/kanan=jual.
 
 ## Pembaruan v0.0.3-2026-DEV-7
 - Menu utama Shop dan menu jumlah memakai bingkai satu lapis yang rapi: satu rail menerus di keempat sisi, dengan aksen hanya pada empat sudut. Ornamen permata lama yang membuat bingkai terlihat berantakan dihapus.

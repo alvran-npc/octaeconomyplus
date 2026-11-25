@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.0.3-2026-DEV-8] - 2026-11-25
+### Added
+- Dedicated Roulette wheel menu (`CASINO_WHEEL`): SPIN debits the stake and opens a 54-slot wheel with a 26-pocket ring in European wheel order that rotates past a fixed top-center pointer, decelerates, and lands on the pre-determined result, with tick sounds, a win/loss reveal and an automatic return to the table.
+- New `casino/animation/roulette.yml` keys: `laps`, `slowdown-steps`, `result-hold-ticks` (existing files receive them automatically).
+- Wallet card and responsible-play card in the Casino main menu; word-wrapped 21+ warning tooltip.
+- Shop category pages share the DEV-7 frame; Player Information card on the bottom row.
+
+### Changed
+- Roulette table layout: outside bets around a green zero, colored concrete number blocks with stack size = number, glowing selected bet/chip, decorative corners; Back moved to slot 52 and chips to slots 46-48.
+- Shop category pages: Back moved to slot 46, Close to slot 52, new Search button at slot 47; tab/page arrows only appear when usable.
+- Shop item lore redesigned; click hints now reflect `shop.click-actions` and the quantity preview no longer shows click hints.
+- Casino main menu, 21+ gate and shop category pages use a framed layout.
+- Closing the wheel menu mid-spin now settles the locked-in result immediately instead of refunding. Disconnect and shutdown still refund.
+
+### Fixed
+- The 21+ warning tooltip no longer renders as one very long line.
+- Removed unused category background code and obsolete animation settings (`frames`, `interval-increase-*`, `display-slot` are no longer read).
+
 ## [0.0.3-2026-DEV-7] - 2026-11-25
 ### Added
 - Player Information card (name, rank, Vault balance) at the bottom center of the Shop main menu and quantity menu. Rank comes from the Vault primary group and falls back to `Member`.

@@ -1,0 +1,23 @@
+# Inbound callbacks are handled on a small daemon HTTP executor.
+# Keep this listener on localhost and expose it through an HTTPS reverse proxy (Caddy/Nginx).
+webhooks:
+  enabled: true
+  bind-address: 127.0.0.1
+  port: 8765
+  max-body-bytes: 65536
+  dedupe-file: data/webhook-events.log
+  paths:
+    saweria: /saweria
+    tebex: /tebex
+  saweria:
+    enabled: false
+    # Copy the Streaming Key from Saweria's HTTP Webhook settings.
+    streaming-key: ""
+  tebex:
+    enabled: false
+    # Copy the endpoint secret from Tebex > Developers > Webhooks > Endpoints.
+    secret: ""
+
+notifications:
+  saweria: "<gold><bold>DONATION</bold></gold> <dark_gray>» <white>{donator} <gray>donated <green>{amount}</green>"
+  tebex: "<aqua><bold>TEBEX</bold></aqua> <dark_gray>» <white>{player} <gray>bought <yellow>{packages}</yellow> <dark_gray>({amount})"

@@ -2,7 +2,7 @@
 
 **An all-in-one economy plugin featuring a categorized Shop GUI, Sell GUI, and a multi-currency Auction House. Fully integrated with Vault and EssentialsX.**
 
-Author: **Alvran** · [GitHub](https://github.com/alvran-npc) · Version: `0.0.3-2026-DEV-7`
+Author: **Alvran** · [GitHub](https://github.com/alvran-npc) · Version: `0.0.3-2026-DEV-8`
 
 OctaEconomy is an original Paper plugin project. It provides a configurable shop, inventory selling, and a database-backed auction house without requiring another shop or auction plugin.
 
@@ -25,7 +25,7 @@ OctaEconomy is an original Paper plugin project. It provides a configurable shop
 | Optional plugins | MMOItems, ExcellentEconomy, SmartSpawner |
 1. Install Java 21 and a supported Paper 1.21.x server.
 2. Install and start Vault and EssentialsX. Confirm that EssentialsX registers an economy provider through Vault.
-3. Copy `OctaEconomy-0.0.3-2026-DEV-7.jar` into the server's `plugins/` directory.
+3. Copy `OctaEconomy-0.0.3-2026-DEV-8.jar` into the server's `plugins/` directory.
 - `/shop blocks` opens the `blocks` category directly.
 - `/shop search diamond` opens matching shop entries.
 - Click an item to open its quantity selector. The selector offers 1, 16, 32, 64, and a plus/minus custom quantity control.
@@ -235,7 +235,7 @@ Controls listing duration, tax, fee, maximum price range, listing count, allowed
 
 ### `casino/settings.yml`, `casino/games/roulette.yml`, and `casino/animation/roulette.yml`
 
-Casino uses Vault only. `casino/settings.yml` controls enablement and chip values; `casino/games/roulette.yml` controls minimum/maximum bets and payout multipliers; `casino/animation/roulette.yml` controls cosmetic animation speed and frame count. The 21+ menu warns underage players to leave and requires a session self-attestation; it is not identity verification. All amounts are virtual server balance; there are no real-money deposits or withdrawals.
+Casino uses Vault only. `casino/settings.yml` controls enablement and chip values; `casino/games/roulette.yml` controls minimum/maximum bets and payout multipliers; `casino/animation/roulette.yml` controls the wheel animation (laps, speed, slowdown and result hold time). The 21+ menu warns underage players to leave and requires a session self-attestation; it is not identity verification. All amounts are virtual server balance; there are no real-money deposits or withdrawals.
 
 ### Language files
 
@@ -301,7 +301,7 @@ The GitHub Actions workflow installs Maven directly and does not depend on a Mav
 The output is:
 
 ```text
-target/OctaEconomy-0.0.3-2026-DEV-7.jar
+target/OctaEconomy-0.0.3-2026-DEV-8.jar
 ```
 
 The Maven project uses `provided` scope for Paper API and Vault API and does not shade dependencies. Paper supplies the SQLite JDBC driver. When `database.type: mysql` is selected, Paper resolves the MySQL connector declared in `plugin.yml`.
@@ -330,6 +330,14 @@ OctaEconomy is **100% free**. Resale, paywall access, mandatory-donation access,
 - Built for the Paper/Bukkit API and Vault economy ecosystem.
 - MMOItems, ExcellentEconomy, and SmartSpawner are optional runtime integrations.
 
+
+## v0.0.3-2026-DEV-8 updates
+- **Roulette wheel menu:** pressing SPIN now debits the stake and opens a dedicated wheel GUI. A ring of 26 colored pockets (European wheel order) rotates past a fixed pointer at the top center, decelerates, and lands on the pre-determined result, with tick sounds and a win/loss reveal before returning to the table. Tune it in `casino/animation/roulette.yml` (`laps`, `start-interval-ticks`, `maximum-interval-ticks`, `slowdown-steps`, `result-hold-ticks`).
+- Closing the wheel menu mid-spin now reveals the already locked-in result immediately instead of refunding the stake, so a spin cannot be cancelled once it looks like a loss. Disconnects and plugin shutdown still refund.
+- Roulette table redesigned: outside bets mirror around a green zero, numbers are colored concrete blocks whose stack size shows the number, the selected bet/chip glows, and the bottom row has chips, SPIN, current bet, last result and Back with decorative corners.
+- Casino main menu and 21+ gate now use a framed layout, wallet card, and word-wrapped warning text so the age warning no longer runs off the screen.
+- Shop category pages now share the clean DEV-7 frame: category tabs on the top rail, Back/Search/Previous/Page/Next/Player Information/Close on the bottom row, glowing current-category tab, and tab/page arrows that only appear when available.
+- Shop item lore redesigned with dividers and symbols, and the click hints now follow the configured `click-actions` instead of always saying left=buy/right=sell.
 
 ## v0.0.3-2026-DEV-7 updates
 - Shop main menu and quantity menu use a clean single-pane border: one continuous rail on all four sides, with only the four corners accented. The old jewel ornaments that made the frame look messy were removed.

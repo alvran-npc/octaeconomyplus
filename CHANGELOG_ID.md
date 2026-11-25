@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.0.3-2026-DEV-8] - 2026-11-25
+### Ditambahkan
+- Menu roda Roulette tersendiri (`CASINO_WHEEL`): SPIN menarik taruhan dan membuka roda 54 slot dengan cincin 26 kantong berurutan seperti roda Eropa yang berputar melewati penunjuk tetap di tengah atas, melambat, lalu berhenti pada hasil yang sudah ditentukan, dengan suara tik, pengumuman menang/kalah, dan kembali otomatis ke meja.
+- Kunci baru `casino/animation/roulette.yml`: `laps`, `slowdown-steps`, `result-hold-ticks` (otomatis ditambahkan ke file lama).
+- Kartu dompet dan kartu bermain bertanggung jawab di menu utama Casino; tooltip peringatan 21+ dibungkus per baris.
+- Halaman kategori Shop memakai bingkai DEV-7; kartu Player Information di baris bawah.
+
+### Diubah
+- Tata letak meja Roulette: taruhan luar di sekitar nol hijau, blok beton berwarna dengan jumlah stack = nomor, taruhan/chip terpilih menyala, sudut dekoratif; Back pindah ke slot 52 dan chip ke slot 46-48.
+- Halaman kategori Shop: Back pindah ke slot 46, Close ke slot 52, tombol Search baru di slot 47; panah tab/halaman hanya muncul bila dapat dipakai.
+- Lore item Shop didesain ulang; petunjuk klik mengikuti `shop.click-actions` dan pratinjau jumlah tidak lagi menampilkan petunjuk klik.
+- Menu utama Casino, gerbang 21+, dan halaman kategori Shop memakai tata letak berbingkai.
+- Menutup menu roda saat berputar kini langsung menyelesaikan hasil yang sudah terkunci, bukan refund. Disconnect dan shutdown tetap refund.
+
+### Diperbaiki
+- Tooltip peringatan 21+ tidak lagi tampil sebagai satu baris yang sangat panjang.
+- Menghapus kode latar kategori yang tidak terpakai dan pengaturan animasi usang (`frames`, `interval-increase-*`, `display-slot` tidak lagi dibaca).
+
 ## [0.0.3-2026-DEV-7] - 2026-11-25
 ### Ditambahkan
 - Kartu Player Information (nama, rank, saldo Vault) di tengah bawah menu utama Shop dan menu jumlah. Rank diambil dari primary group Vault dan memakai `Member` sebagai cadangan.

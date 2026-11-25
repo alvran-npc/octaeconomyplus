@@ -1,0 +1,6 @@
+# Roulette game rules; bets always use Vault virtual currency.
+minimum-bet: 100.0
+maximum-bet: 100000.0
+payouts:
+  straight-number-profit: 35
+  even-money-profit: 1
