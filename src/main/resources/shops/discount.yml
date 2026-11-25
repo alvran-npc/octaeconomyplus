@@ -1,0 +1,23 @@
+# Seasonal Shop discounts. All dates use the server's local timezone.
+# Set enabled to true and choose an offer under active to display/apply a sale.
+# Empty categories and items lists mean the offer applies to every shop item.
+config-version: 1
+enabled: false
+active: christmas
+offers:
+  christmas:
+    enabled: false
+    display-name: "<gradient:#ff5454:#65d98b><bold>CHRISTMAS FESTIVAL</bold></gradient>"
+    percent: 25.0
+    starts-at: "2026-12-20T00:00:00"
+    ends-at: "2027-01-05T23:59:59"
+    categories: []
+    items: []
+  new_year:
+    enabled: false
+    display-name: "<gradient:#ffe58a:#f2a93b><bold>NEW YEAR SALE</bold></gradient>"
+    percent: 15.0
+    starts-at: ""
+    ends-at: ""
+    categories: []
+    items: []

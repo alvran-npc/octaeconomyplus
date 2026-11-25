@@ -1,0 +1,102 @@
+# Shop / Sell GUI settings. Everything players read in the Shop menus is editable here;
+# no source change is needed. Text uses MiniMessage (<red>, <gradient:...>) and also
+# accepts legacy &-colors. Missing keys fall back to the built-in defaults.
+shop:
+  title: <dark_green>OctaEconomy <gray>› <white>Shop
+  rows: 6
+  background: BLACK_STAINED_GLASS_PANE
+  accent: GREEN_STAINED_GLASS_PANE
+  category-background: BLACK_STAINED_GLASS_PANE
+  category-accent: LIME_STAINED_GLASS_PANE
+  frame-line: CYAN_STAINED_GLASS_PANE
+  frame-corner: PURPLE_STAINED_GLASS_PANE
+  category-rail: GRAY_STAINED_GLASS_PANE
+
+  # Currency id -> text shown to players. Unlisted currencies show their id.
+  currency-names:
+    vault: money
+
+  # Bottom-center card (name, rank, balance).
+  # Placeholders: {player} {rank} {balance} {currency}
+  player-info:
+    default-rank: Member
+    name: "<gold>✦ <white>Player Information <gold>✦"
+    lines:
+      - "{divider}"
+      - "<aqua>❖ <gray>Name <dark_gray>▸ <white>{player}"
+      - "<light_purple>◆ <gray>Rank <dark_gray>▸ <white>{rank}"
+      - "<green>◇ <gray>Balance <dark_gray>▸ <gold>{balance} <gray>{currency}"
+      - "{divider}"
+
+  lore:
+    # Inserted wherever a line is exactly {divider} (or contains {divider}).
+    divider: "<dark_gray>━━━━━ <gold>✦ <dark_gray>━━━━━"
+
+    # ---- CATEGORIES -------------------------------------------------------
+    categories:
+      # Category card in the main Shop menu.
+      # Placeholders: {category} {items} {buy-range} {sell-range}
+      # A line that is exactly {buy} or {sell} expands to the matching block below.
+      main-menu:
+        lines:
+          - "{divider}"
+          - "<aqua>❖ <gray>Items <dark_gray>▸ <white>{items}"
+          - "{buy}"
+          - "{sell}"
+          - "{divider}"
+          - "<yellow>➜ <white>Click to browse"
+        buy:
+          - "<green>◆ <gray>Buy <dark_gray>▸ <green>{buy-range}"
+        sell:
+          - "<red>◇ <gray>Sell <dark_gray>▸ <red>{sell-range}"
+        no-prices:
+          - "<gray>◇ Prices <dark_gray>▸ <dark_gray>Not configured"
+      # Category tab on the top row of a category page.
+      # Placeholders: {category} {items}; {current} and {action} are blocks.
+      tab:
+        lines:
+          - "{divider}"
+          - "{current}"
+          - "<aqua>❖ <gray>Items <dark_gray>▸ <white>{items}"
+          - "{divider}"
+          - "{action}"
+        current:
+          - "<gold>✦ <yellow>Current category"
+        action:
+          - "<yellow>➜ <white>Switch category"
+        action-current:
+          - "<dark_gray>You are here"
+
+    # ---- SHOP ITEMS (buy side and sell side) ------------------------------
+    # Placeholders: {buy-price} {regular-price} {sell-price} {currency}
+    #               {discount-name} {discount-percent}
+    #               {left-action} {right-action} {shift-left-action}
+    # {buy}, {sell} and {click-hints} are blocks defined below.
+    shop-items:
+      lines:
+        - "{divider}"
+        - "{buy}"
+        - "{sell}"
+        - "{click-hints}"
+      buy:
+        - "<green>◆ <gray>Buy <dark_gray>▸ <white>{buy-price} {currency}"
+      buy-discounted:
+        - "<gray>◆ Was <dark_gray>▸ <red><strikethrough>{regular-price} {currency}"
+        - "<green>◆ Now <dark_gray>▸ <white>{buy-price} {currency}"
+        - "<gold>✦ {discount-name} {discount-percent}% off"
+      buy-unavailable:
+        - "<dark_gray>◆ Buy <dark_gray>▸ <red>Unavailable"
+      sell:
+        - "<red>◇ <gray>Sell <dark_gray>▸ <white>{sell-price} {currency}"
+      sell-unavailable:
+        - "<dark_gray>◇ Sell <dark_gray>▸ <red>Unavailable"
+      # Hidden automatically in the quantity menu preview.
+      click-hints:
+        - "{divider}"
+        - "<yellow>➜ <gray>Left-click <dark_gray>▸ <white>{left-action}"
+        - "<yellow>➜ <gray>Right-click <dark_gray>▸ <white>{right-action}"
+        - "<yellow>➜ <gray>Shift + Left <dark_gray>▸ <white>{shift-left-action}"
+
+sell:
+  title: <dark_green>Sell Items <gray>› <white>Place items here
+  rows: 6
