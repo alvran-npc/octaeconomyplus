@@ -1,5 +1,0 @@
-# Auction House GUI layout defaults
-auction:
-  inventory-size: 54
-  title-prefix: "Auction House"
-  frame-enabled: true
