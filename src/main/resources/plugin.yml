@@ -1,0 +1,105 @@
+name: OctaEconomy
+version: '${project.version}'
+main: dev.alvran.octaeconomy.OctaEconomy
+api-version: '1.20'
+author: Alvran
+description: An all-in-one economy plugin with a polished categorized Shop GUI (clean frame, player info card, styled category lore), SellGUI, a multi-currency Auction House, a roleplay Casino, and donation/store notifications.
+website: https://github.com/alvran-npc
+depend: [Vault, Essentials]
+softdepend: [MMOItems, ExcellentEconomy, SmartSpawner, PlaceholderAPI]
+libraries:
+  - com.mysql:mysql-connector-j:9.2.0
+commands:
+  shop:
+    description: Open the categorized economy shop.
+    usage: /shop [category|search <keyword>]
+    permission: octaeconomy.shop.use
+  sellgui:
+    description: Open the sell inventory.
+    usage: /sellgui
+    aliases: [sellg]
+    permission: octaeconomy.sell.gui
+  sell:
+    description: Sell held or inventory items.
+    usage: /sell <hand|handall|inv>
+    permission: octaeconomy.sell.use
+  ah:
+    description: Open the multi-currency Auction House.
+    usage: /ah [sell <price> [currency] [expired]|expired|collect|search <keyword>|mylistings|theme [dimension]]
+    aliases: [auction]
+    permission: octaeconomy.auction.use
+  casino:
+    description: Open the 21+ roleplay casino menu.
+    usage: /casino [roulette]
+    permission: octaeconomy.casino.use
+  donate:
+    description: Show the author's donation page.
+    usage: /donate
+  octaeconomy:
+    description: OctaEconomy administration and information.
+    usage: /octaeconomy <reload|version|help|debug|donate>
+    aliases: [oeco]
+permissions:
+  octaeconomy.shop.use:
+    default: true
+  octaeconomy.shop.category.*:
+    default: true
+  octaeconomy.shop.category.blocks:
+    description: Access the Blocks shop category.
+    default: true
+  octaeconomy.shop.category.colored_blocks:
+    description: Access the Colored Blocks shop category.
+    default: true
+  octaeconomy.shop.category.decoration:
+    description: Access the Decoration shop category.
+    default: true
+  octaeconomy.shop.category.redstone:
+    description: Access the Redstone shop category.
+    default: true
+  octaeconomy.shop.category.farming_food:
+    description: Access the Farming and Food shop category.
+    default: true
+  octaeconomy.shop.category.misc:
+    description: Access the Miscellaneous shop category.
+    default: true
+  octaeconomy.shop.category.mobs_drop:
+    description: Access the Mob Drops shop category.
+    default: true
+  octaeconomy.shop.category.mmoitems:
+    description: Access the MMOItems shop category.
+    default: true
+  octaeconomy.shop.category.vanilla_tools:
+    description: Access the Vanilla Tools shop category.
+    default: true
+  octaeconomy.shop.category.spawners:
+    description: Access the Spawners shop category.
+    default: true
+  octaeconomy.sell.use:
+    default: true
+  octaeconomy.sell.gui:
+    default: true
+  octaeconomy.sell.hand:
+    default: true
+  octaeconomy.sell.handall:
+    default: true
+  octaeconomy.sell.inv:
+    default: true
+  octaeconomy.sell.multiplier.*:
+    default: false
+  octaeconomy.auction.use:
+    default: true
+  octaeconomy.auction.sell:
+    default: true
+  octaeconomy.auction.limit.*:
+    default: false
+  octaeconomy.auction.expire.custom:
+    description: Allows setting a custom listing expiration with /ah sell.
+    default: op
+  octaeconomy.casino.use:
+    description: Allows opening the casino menu and age gate.
+    default: true
+  octaeconomy.casino.roulette:
+    description: Allows playing the roleplay roulette game.
+    default: true
+  octaeconomy.admin:
+    default: op

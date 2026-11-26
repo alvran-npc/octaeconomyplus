@@ -10,6 +10,9 @@ Update perbaikan: tanpa fitur gameplay baru, file lebih rapi dan teks dapat died
 - `/octaeconomy reload` kini memuat ulang `config.yml` setelah migrasi file agar pengaturan yang dipindah langsung berlaku.
 
 ### Ditambahkan
+- Harga ditampilkan sebagai `15,000.00` (desimal titik, pemisah ribuan) pada lore item, rentang kategori, menu konfirmasi, dan chat. Pola: `shop.price-format` di `config.yml`.
+- Dukungan PlaceholderAPI opsional: `%placeholder%` di lore `gui/shop.yml` diterjemahkan per pemain (soft dependency, tidak wajib; atur dengan `shop.placeholderapi`).
+- Layout bagian per kategori (`shop.layouts` di `config.yml`). Tools: halaman 1 armor (satu jenis per baris, satu material per kolom), lalu pedang, beliung, cangkul, kapak, dan sekop di halaman berikutnya dengan layout baris yang sama, lalu sisanya. Blocks: jenis kayu dulu (azalea, oak...), lalu jenis batu, lalu blok lain.
 - Lore Shop yang dapat diedit: `gui/shop.yml` `shop.lore.categories.main-menu`, `shop.lore.categories.tab`, `shop.lore.shop-items`, dan `shop.player-info` dengan placeholder dan baris blok (`{buy}`, `{sell}`, `{click-hints}`). Key yang hilang memakai default bawaan.
 - `shop.lore.divider` dan `shop.currency-names` di `gui/shop.yml`.
 

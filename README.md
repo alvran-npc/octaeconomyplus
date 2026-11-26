@@ -334,6 +334,14 @@ OctaEconomy is **100% free**. Resale, paywall access, mandatory-donation access,
 - MMOItems, ExcellentEconomy, and SmartSpawner are optional runtime integrations.
 
 
+## v0.0.3-2026 updates
+- Money wording, grouped item order, new file layout and editable lore (see the changelog).
+- **Price format:** prices read `15,000.00` everywhere in the Shop (`shop.price-format`).
+- **PlaceholderAPI:** install PlaceholderAPI and use `%placeholders%` in the lore lines of `gui/shop.yml` (categories, items and the player card). It is optional; disable it with `shop.placeholderapi: false`.
+- **Tools layout:** page 1 is armor with one piece type per row and one material per column (leather to netherite), the next page(s) hold swords, pickaxes, hoes, axes and shovels the same way, and everything else follows.
+- **Blocks layout:** the first pages hold wood types (azalea, oak, ...), then stone types, then every other block.
+- Custom layouts: edit `shop.layouts.<category>.sections` in `config.yml` (patterns like `*_helmet` or `family:oak`, `layout: rows` or flow).
+
 ## v0.0.3-2026-DEV-8 updates
 - **Roulette wheel menu:** pressing SPIN now debits the stake and opens a dedicated wheel GUI. A ring of 26 colored pockets (European wheel order) rotates past a fixed pointer at the top center, decelerates, and lands on the pre-determined result, with tick sounds and a win/loss reveal before returning to the table. Tune it in `casino/animation/roulette.yml` (`laps`, `start-interval-ticks`, `maximum-interval-ticks`, `slowdown-steps`, `result-hold-ticks`).
 - Closing the wheel menu mid-spin now reveals the already locked-in result immediately instead of refunding the stake, so a spin cannot be cancelled once it looks like a loss. Disconnects and plugin shutdown still refund.

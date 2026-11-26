@@ -1,0 +1,1058 @@
+/*
+ * OctaEconomy - Copyright (c) Alvran (https://github.com/alvran-npc)
+ * Free software. Resale is prohibited. See LICENSE.
+ */
+package dev.alvran.octaeconomy.shop;
+
+import dev.alvran.octaeconomy.OctaEconomy;
+import dev.alvran.octaeconomy.api.ShopTransactionEvent;
+import dev.alvran.octaeconomy.core.LangManager;
+import dev.alvran.octaeconomy.core.Module;
+import dev.alvran.octaeconomy.core.TaskScheduler;
+import dev.alvran.octaeconomy.gui.MenuType;
+import dev.alvran.octaeconomy.gui.OctaMenuHolder;
+import dev.alvran.octaeconomy.hook.CurrencyManager;
+import dev.alvran.octaeconomy.hook.CurrencyProvider;
+import dev.alvran.octaeconomy.hook.MMOItemsHook;
+import dev.alvran.octaeconomy.hook.PlaceholderHook;
+import dev.alvran.octaeconomy.hook.SmartSpawnerHook;
+import java.io.File;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeParseException;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.logging.Level;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.minimessage.MiniMessage;
+import net.kyori.adventure.text.format.TextDecoration;
+import org.bukkit.Bukkit;
+import org.bukkit.Material;
+import org.bukkit.Sound;
+import org.bukkit.command.*;
+import org.bukkit.entity.Player;
+import org.bukkit.event.inventory.ClickType;
+import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.PlayerInventory;
+import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.inventory.meta.SkullMeta;
+import org.bukkit.scheduler.BukkitTask;
+import org.bukkit.configuration.file.YamlConfiguration;
+
+public final class ShopModule implements Module {
+    private final OctaEconomy plugin;
+    private final LangManager lang;
+    private final CurrencyManager currencies;
+    private final TaskScheduler scheduler;
+    private final MMOItemsHook mmoItems;
+    private final SmartSpawnerHook smartSpawner;
+    private final ShopManager manager;
+    private final MiniMessage mini = MiniMessage.miniMessage();
+    private YamlConfiguration guiConfig;
+    private YamlConfiguration discountsConfig;
+    private org.bukkit.configuration.file.FileConfiguration shopSettings;
+    private PlaceholderHook placeholderHook;
+    private BukkitTask usagePruneTask;
+    private boolean discountConfigWarningLogged;
+    // Main menu: four centered rows below a dedicated title rail. The side gutters
+    // remain clear in every row so the frame never gets broken by category icons.
+    private static final int[][] SHOP_ROWS = {
+            {12, 13, 14},
+            {20, 21, 22, 23, 24},
+            {28, 29, 30, 31, 32, 33, 34},
+            {37, 38, 39, 40, 41, 42, 43}
+    };
+    private static final int SHOP_PAGE_CAPACITY = 22;
+    // Bottom-row layout shared by the Shop main menu and the quantity menu. The four
+    // frame corners (0, 8, 45, 53) are purely decorative so the border stays clean.
+    private static final int SLOT_INFO = 49;
+    private static final int SLOT_LEFT_BUTTON = 47;
+    private static final int SLOT_PREVIOUS = 48;
+    private static final int SLOT_NEXT = 50;
+    private static final int SLOT_RIGHT_BUTTON = 51;
+    private static final String LORE_DIVIDER = "<dark_gray>━━━━━ <gold>✦ <dark_gray>━━━━━";
+    private static final int SHOP_CATEGORY_CAPACITY = 28;
+    private static final int[] CATEGORY_ITEM_SLOTS = {10, 11, 12, 13, 14, 15, 16, 19, 20, 21, 22, 23, 24, 25, 28, 29, 30, 31, 32, 33, 34, 37, 38, 39, 40, 41, 42, 43};
+    private static final int[] CATEGORY_TAB_SLOTS = {1, 2, 3, 4, 5, 6, 7};
+    private record DiscountOffer(String id, String displayName, BigDecimal percent) { }
+    private final Map<UUID, Long> clickDebounce = new ConcurrentHashMap<>();
+    private final Map<UUID, Map<String, DailyUsage>> dailyUsage = new ConcurrentHashMap<>();
+    private record DailyUsage(LocalDate date, int amount) { }
+    private record PriceState(BigDecimal multiplier, long updatedAt) { }
+    private final Map<String, PriceState> dynamicPrices = new ConcurrentHashMap<>();
+
+    public ShopModule(OctaEconomy plugin, LangManager lang, CurrencyManager currencies, TaskScheduler scheduler,
+                      MMOItemsHook mmoItems, SmartSpawnerHook smartSpawner) {
+        this.plugin = plugin; this.lang = lang; this.currencies = currencies; this.scheduler = scheduler;
+        this.mmoItems = mmoItems; this.smartSpawner = smartSpawner;
+        this.manager = new ShopManager(plugin, mmoItems, smartSpawner);
+    }
+
+    @Override public String name() { return "ShopGUI"; }
+    @Override public void enable() {
+        reload();
+        if (usagePruneTask == null) usagePruneTask = Bukkit.getScheduler().runTaskTimer(plugin, this::pruneExpiredUsage, 20L * 60L * 10L, 20L * 60L * 60L);
+    }
+    @Override public void disable() {
+        if (usagePruneTask != null) { usagePruneTask.cancel(); usagePruneTask = null; }
+        clickDebounce.clear(); dailyUsage.clear(); dynamicPrices.clear();
+    }
+
+    private void pruneExpiredUsage() {
+        LocalDate today = LocalDate.now();
+        dailyUsage.entrySet().removeIf(entry -> {
+            entry.getValue().entrySet().removeIf(value -> !value.getValue().date().equals(today));
+            return entry.getValue().isEmpty();
+        });
+    }
+    @Override public void reload() {
+        guiConfig = YamlConfiguration.loadConfiguration(new File(plugin.getDataFolder(), "gui/shop.yml"));
+        discountsConfig = YamlConfiguration.loadConfiguration(new File(plugin.getDataFolder(), "shops/discount.yml"));
+        shopSettings = plugin.getConfig(); // shop options now live in config.yml under "shop:"
+        discountConfigWarningLogged = false;
+        manager.reload();
+    }
+    public ShopManager manager() { return manager; }
+    public void clearPlayer(UUID player) {
+        // Keep current-day counters across disconnects; otherwise a player could
+        // bypass an enabled sell limit by reconnecting. Old-day entries are pruned.
+        clickDebounce.remove(player);
+        Map<String, DailyUsage> usage = dailyUsage.get(player);
+        if (usage != null) {
+            LocalDate today = LocalDate.now();
+            usage.entrySet().removeIf(entry -> !entry.getValue().date().equals(today));
+            if (usage.isEmpty()) dailyUsage.remove(player, usage);
+        }
+    }
+
+    public boolean onShopCommand(CommandSender sender, Command command, String label, String[] args) {
+        if (!(sender instanceof Player player)) { lang.send(sender, "players-only"); return true; }
+        if (!player.hasPermission("octaeconomy.shop.use")) { lang.send(player, "no-permission"); return true; }
+        if (args.length == 0) { openMain(player, 0); return true; }
+        if (args[0].equalsIgnoreCase("search")) {
+            if (args.length < 2) { lang.send(player, "usage", Map.of("usage", "/shop search <keyword>")); return true; }
+            String search = String.join(" ", Arrays.copyOfRange(args, 1, args.length)); openCategory(player, "@search:" + search, 0); return true;
+        }
+        openMainCategory(player, args[0]);
+        return true;
+    }
+
+    public boolean onSellGuiCommand(CommandSender sender, Command command, String label, String[] args) {
+        if (!(sender instanceof Player player)) { lang.send(sender, "players-only"); return true; }
+        if (!player.hasPermission("octaeconomy.sell.gui")) { lang.send(player, "no-permission"); return true; }
+        openSellGui(player); return true;
+    }
+
+    public boolean onSellCommand(CommandSender sender, Command command, String label, String[] args) {
+        if (!(sender instanceof Player player)) { lang.send(sender, "players-only"); return true; }
+        if (!player.hasPermission("octaeconomy.sell.use")) { lang.send(player, "no-permission"); return true; }
+        if (args.length != 1) { lang.send(player, "usage", Map.of("usage", "/sell <hand|handall|inv>")); return true; }
+        switch (args[0].toLowerCase(Locale.ROOT)) {
+            case "hand" -> {
+                if (!player.hasPermission("octaeconomy.sell.hand")) { lang.send(player, "no-permission"); return true; }
+                ItemStack hand = player.getInventory().getItemInMainHand();
+                if (hand.getType().isAir()) { lang.send(player, "cannot-sell"); return true; }
+                sellFromInventory(player, hand, hand.getAmount(), true);
+            }
+            case "handall" -> {
+                if (!player.hasPermission("octaeconomy.sell.handall")) { lang.send(player, "no-permission"); return true; }
+                ItemStack hand = player.getInventory().getItemInMainHand();
+                if (hand.getType().isAir()) { lang.send(player, "cannot-sell"); return true; }
+                sellFromInventory(player, hand, Integer.MAX_VALUE, false);
+            }
+            case "inv" -> {
+                if (!player.hasPermission("octaeconomy.sell.inv")) { lang.send(player, "no-permission"); return true; }
+                sellInventory(player);
+            }
+            default -> lang.send(player, "usage", Map.of("usage", "/sell <hand|handall|inv>"));
+        }
+        return true;
+    }
+
+    public List<String> tabCompleteShop(String[] args) {
+        if (args.length == 1) { List<String> result = new ArrayList<>(manager.categories().stream().map(ShopCategory::id).toList()); result.add("search"); return result; }
+        if (args.length == 2 && args[0].equalsIgnoreCase("search")) return List.of("stone", "diamond", "iron");
+        return List.of();
+    }
+    public List<String> tabCompleteSell(String[] args) { return args.length == 1 ? List.of("hand", "handall", "inv") : List.of(); }
+
+    private void openMainCategory(Player player, String category) {
+        ShopCategory found = manager.category(category);
+        if (found == null || !player.hasPermission("octaeconomy.shop.category." + found.id())
+                || (!found.permission().isBlank() && !player.hasPermission(found.permission()))) {
+            lang.send(player, "category-missing"); return;
+        }
+        openCategory(player, category, 0);
+    }
+
+    public void openMain(Player player, int page) {
+        List<ShopCategory> accessible = manager.categories().stream()
+                .filter(category -> player.hasPermission("octaeconomy.shop.category." + category.id()))
+                .filter(category -> category.permission().isBlank() || player.hasPermission(category.permission()))
+                // category.slot controls ordering only; the actual GUI position always follows the trapezoid.
+                .sorted(Comparator.comparingInt(ShopCategory::slot).thenComparing(ShopCategory::id))
+                .toList();
+        int maxPage = Math.max(0, (accessible.size() - 1) / SHOP_PAGE_CAPACITY);
+        page = Math.min(Math.max(0, page), maxPage);
+        OctaMenuHolder holder = new OctaMenuHolder(player.getUniqueId(), MenuType.SHOP_MAIN, "", page, 1, -1);
+        Inventory inventory = Bukkit.createInventory(holder, 54, ui(guiConfig.getString("shop.title", "<dark_green>OCTA MARKET <gray>/ <white>Categories")));
+        holder.attach(inventory);
+        paintShopBackground(inventory);
+        inventory.setItem(4, ornament(Material.NETHER_STAR, "<gold>✦ <white>OCTA MARKET <gold>✦",
+                "<gray>Choose a category", "<dark_gray>━━━━━━━━━━━━━━━━━━"));
+        inventory.setItem(SLOT_INFO, playerInfoItem(player));
+        int start = page * SHOP_PAGE_CAPACITY;
+        int visible = Math.min(SHOP_PAGE_CAPACITY, Math.max(0, accessible.size() - start));
+        List<Integer> slots = centeredTrapezoidSlots(visible);
+        for (int i = 0; i < visible; i++) {
+            ShopCategory category = accessible.get(start + i);
+            ItemStack icon = new ItemStack(category.icon());
+            ItemMeta meta = icon.getItemMeta();
+            // Preserve user-defined category colors rather than adding another palette.
+            meta.displayName(ui(category.displayName()));
+            meta.lore(categoryCardLore(player, category));
+            setNormalLore(meta);
+            icon.setItemMeta(meta);
+            int slot = slots.get(i);
+            inventory.setItem(slot, icon);
+            holder.map(slot, category.id());
+        }
+        setMainNav(inventory, holder, page, maxPage);
+        player.openInventory(inventory);
+    }
+
+    public void openCategory(Player player, String category, int page) {
+        int tabPage = 0;
+        if (!category.startsWith("@search:")) {
+            List<ShopCategory> accessible = accessibleCategories(player);
+            for (int i = 0; i < accessible.size(); i++) {
+                if (accessible.get(i).id().equalsIgnoreCase(category)) { tabPage = i / CATEGORY_TAB_SLOTS.length; break; }
+            }
+        }
+        openCategory(player, category, page, tabPage);
+    }
+
+    private List<ShopCategory> accessibleCategories(Player player) {
+        return manager.categories().stream()
+                .filter(category -> player.hasPermission("octaeconomy.shop.category." + category.id()))
+                .filter(category -> category.permission().isBlank() || player.hasPermission(category.permission()))
+                .sorted(Comparator.comparingInt(ShopCategory::slot).thenComparing(ShopCategory::id))
+                .toList();
+    }
+
+    private void openCategory(Player player, String category, int page, int categoryTabPage) {
+        boolean searchMode = category.startsWith("@search:");
+        List<ShopItem> entries;
+        String title;
+        if (searchMode) {
+            String needle = category.substring(8).toLowerCase(Locale.ROOT);
+            entries = manager.allItems().stream().filter(item -> {
+                ShopCategory categoryInfo = manager.category(item.categoryId());
+                if (categoryInfo == null || !player.hasPermission("octaeconomy.shop.category." + categoryInfo.id())) return false;
+                if (!categoryInfo.permission().isBlank() && !player.hasPermission(categoryInfo.permission())) return false;
+                return item.displayName().toLowerCase(Locale.ROOT).contains(needle)
+                        || item.template().getType().name().toLowerCase(Locale.ROOT).contains(needle);
+            }).sorted(ItemGrouping.grouped()).toList(); // stable, grouped order instead of hash order
+            title = "<green>Shop <dark_gray>· <white>Search";
+        } else {
+            ShopCategory info = manager.category(category);
+            if (info == null || !player.hasPermission("octaeconomy.shop.category." + info.id())
+                    || (!info.permission().isBlank() && !player.hasPermission(info.permission()))) {
+                lang.send(player, "category-missing"); return;
+            }
+            entries = manager.pagedItems(category); // may hold null entries = empty layout slots
+            title = "<green>Shop <dark_gray>· " + info.displayName();
+        }
+
+        int maxPage = Math.max(0, (entries.size() - 1) / SHOP_CATEGORY_CAPACITY);
+        page = Math.min(Math.max(0, page), maxPage);
+        List<ShopCategory> accessible = accessibleCategories(player);
+        int maxTabPage = Math.max(0, (accessible.size() - 1) / CATEGORY_TAB_SLOTS.length);
+        categoryTabPage = Math.min(Math.max(0, categoryTabPage), maxTabPage);
+
+        OctaMenuHolder holder = new OctaMenuHolder(player.getUniqueId(), MenuType.SHOP_CATEGORY, category, page, categoryTabPage, -1);
+        Inventory inventory = Bukkit.createInventory(holder, 54, ui(title)); holder.attach(inventory);
+        paintShopFrame(inventory, categoryPaneFiller());
+
+        // The two top corners become tab-page arrows only when another page of category tabs exists.
+        if (categoryTabPage > 0) {
+            inventory.setItem(0, button(Material.SPECTRAL_ARROW, "<yellow>‹ <white>Previous categories"));
+            holder.map(0, "@tabprev");
+        }
+        if (categoryTabPage < maxTabPage) {
+            inventory.setItem(8, button(Material.SPECTRAL_ARROW, "<yellow>Next categories <white>›"));
+            holder.map(8, "@tabnext");
+        }
+        int tabStart = categoryTabPage * CATEGORY_TAB_SLOTS.length;
+        for (int i = 0; i < CATEGORY_TAB_SLOTS.length; i++) {
+            int categoryIndex = tabStart + i;
+            if (categoryIndex >= accessible.size()) continue; // keeps the frame pane
+            ShopCategory tab = accessible.get(categoryIndex);
+            ItemStack icon = new ItemStack(tab.icon());
+            ItemMeta meta = icon.getItemMeta();
+            meta.displayName(ui(tab.displayName()));
+            boolean currentTab = !searchMode && tab.id().equalsIgnoreCase(category);
+            List<Component> tabLore = categoryTabLore(player, tab, currentTab);
+            meta.lore(tabLore);
+            if (currentTab) meta.setEnchantmentGlintOverride(true);
+            setNormalLore(meta);
+            icon.setItemMeta(meta);
+            inventory.setItem(CATEGORY_TAB_SLOTS[i], icon);
+            holder.map(CATEGORY_TAB_SLOTS[i], "@category:" + tab.id());
+        }
+
+        int start = page * SHOP_CATEGORY_CAPACITY;
+        int visible = Math.min(SHOP_CATEGORY_CAPACITY, Math.max(0, entries.size() - start));
+        int shownOnPage = 0;
+        for (int i = 0; i < visible; i++) {
+            ShopItem item = entries.get(start + i);
+            if (item == null) continue; // deliberate gap from the category layout
+            int slot = CATEGORY_ITEM_SLOTS[i]; // 4 x 7 inner grid with a one-slot frame on each side.
+            inventory.setItem(slot, createShopDisplay(player, item, true));
+            holder.map(slot, item.categoryId() + ":" + item.id());
+            shownOnPage++;
+        }
+        long totalItems = entries.stream().filter(Objects::nonNull).count();
+
+        // Bottom row: the corners stay decorative, controls sit symmetrically around the page card.
+        inventory.setItem(46, button(Material.ARROW, "<gold>« <white>Back to categories"));
+        inventory.setItem(47, button(Material.SPYGLASS, "<aqua>❖ <white>Search", "<gray>Use <yellow>/shop search \\<word>"));
+        if (page > 0) {
+            inventory.setItem(48, button(Material.SPECTRAL_ARROW, "<aqua>« <white>Previous page"));
+            holder.map(48, "@pageprev");
+        }
+        inventory.setItem(49, button(Material.BOOK, "<green>✦ <white>Shop",
+                loreDivider(),
+                "<aqua>❖ <gray>Page <dark_gray>▸ <white>" + (page + 1) + " / " + (maxPage + 1),
+                "<green>◆ <gray>Showing <dark_gray>▸ <white>" + shownOnPage + " of " + totalItems + " items",
+                loreDivider()));
+        if (page < maxPage) {
+            inventory.setItem(50, button(Material.SPECTRAL_ARROW, "<aqua>Next page <white>»"));
+            holder.map(50, "@pagenext");
+        }
+        inventory.setItem(51, playerInfoItem(player));
+        inventory.setItem(52, button(Material.BARRIER, "<red>✖ <white>Close"));
+        player.openInventory(inventory);
+    }
+
+    private Material categoryPaneFiller() {
+        return materialOr(guiConfig.getString("shop.category-background", "BLACK_STAINED_GLASS_PANE"), Material.BLACK_STAINED_GLASS_PANE);
+    }
+
+    private ItemStack ornament(Material material, String name, String... lore) {
+        ItemStack item = new ItemStack(material);
+        ItemMeta meta = item.getItemMeta();
+        meta.displayName(ui(name));
+        if (lore.length > 0) meta.lore(Arrays.stream(lore).map(this::ui).toList());
+        setNormalLore(meta);
+        item.setItemMeta(meta);
+        return item;
+    }
+
+    /** Centered 3-5-7-7 rows; an incomplete final row is centered too. */
+    private List<Integer> centeredTrapezoidSlots(int count) {
+        List<Integer> result = new ArrayList<>(Math.min(SHOP_PAGE_CAPACITY, Math.max(0, count)));
+        int remaining = Math.min(SHOP_PAGE_CAPACITY, Math.max(0, count));
+        for (int[] row : SHOP_ROWS) {
+            if (remaining <= 0) break;
+            int amount = Math.min(row.length, remaining);
+            int center = row.length / 2;
+            if ((amount & 1) == 1) {
+                // Odd counts occupy a contiguous run centered on the middle slot.
+                int offset = center - amount / 2;
+                for (int i = 0; i < amount; i++) result.add(row[offset + i]);
+            } else {
+                // Even counts are mirrored around the center, leaving one intentional center gap.
+                int half = amount / 2;
+                for (int i = center - half; i < center; i++) result.add(row[i]);
+                for (int i = center + 1; i <= center + half; i++) result.add(row[i]);
+            }
+            remaining -= amount;
+        }
+        return result;
+    }
+
+    private void paintShopBackground(Inventory inventory) {
+        paintShopFrame(inventory, materialOr(guiConfig.getString("shop.background", "BLACK_STAINED_GLASS_PANE"), Material.BLACK_STAINED_GLASS_PANE));
+    }
+
+    private void paintShopFrame(Inventory inventory, Material filler) {
+        Material line = materialOr(guiConfig.getString("shop.frame-line", "CYAN_STAINED_GLASS_PANE"), Material.CYAN_STAINED_GLASS_PANE);
+        Material corner = materialOr(guiConfig.getString("shop.frame-corner", "PURPLE_STAINED_GLASS_PANE"), Material.PURPLE_STAINED_GLASS_PANE);
+        for (int slot = 0; slot < inventory.getSize(); slot++) inventory.setItem(slot, pane(filler));
+
+        // One continuous single-pane border: top rail, bottom rail and both side rails
+        // use the same pane, and only the four corners get a contrasting accent pane.
+        for (int slot = 0; slot < 9; slot++) inventory.setItem(slot, pane(line));
+        for (int slot = 45; slot < 54; slot++) inventory.setItem(slot, pane(line));
+        for (int row = 1; row <= 4; row++) {
+            inventory.setItem(row * 9, pane(line));
+            inventory.setItem(row * 9 + 8, pane(line));
+        }
+        for (int slot : new int[]{0, 8, 45, 53}) inventory.setItem(slot, pane(corner));
+    }
+
+    /** Bottom-center card with the viewer's name, rank and balance; text comes from gui/shop.yml. */
+    private ItemStack playerInfoItem(Player player) {
+        ItemStack head = new ItemStack(Material.PLAYER_HEAD);
+        ItemMeta meta = head.getItemMeta();
+        if (meta instanceof SkullMeta skull) skull.setOwningPlayer(player);
+        meta.displayName(ui(guiConfig.getString("shop.player-info.name", "<gold>✦ <white>Player Information <gold>✦")));
+        String currencyId = plugin.getConfig().getString("economy.default-currency", "vault");
+        Map<String, String> vars = new HashMap<>();
+        vars.put("player", miniEscape(player.getName()));
+        vars.put("rank", miniEscape(playerRank(player)));
+        String balance = playerBalance(player, currencyId);
+        vars.put("balance", balance == null ? "Unavailable" : balance);
+        vars.put("currency", balance == null ? "" : miniEscape(currencyName(currencyId)));
+        meta.lore(renderLore(player, loreList("shop.player-info.lines", DEFAULT_INFO_LINES), Map.of(), vars));
+        head.setItemMeta(meta);
+        return head;
+    }
+
+    private String playerRank(Player player) {
+        String fallback = guiConfig.getString("shop.player-info.default-rank", "Member");
+        String group = currencies.vault().primaryGroup(player);
+        if (group == null || group.isBlank() || group.equalsIgnoreCase("default")) return fallback;
+        group = group.trim();
+        return Character.isLowerCase(group.charAt(0)) ? Character.toUpperCase(group.charAt(0)) + group.substring(1) : group;
+    }
+
+    /** Formatted balance, or null when the economy provider is unavailable. */
+    private String playerBalance(Player player, String currencyId) {
+        CurrencyProvider provider = currencies.get(currencyId);
+        if (provider == null) provider = currencies.get("vault");
+        if (provider == null) return null;
+        double balance = provider.balance(player);
+        if (!Double.isFinite(balance)) return null;
+        return String.format(Locale.US, "%,.2f", balance);
+    }
+
+    // ---- Editable lore (gui/shop.yml -> shop.lore.*) -------------------------------------------------
+
+    private static final List<String> DEFAULT_INFO_LINES = List.of("{divider}",
+            "<aqua>❖ <gray>Name <dark_gray>▸ <white>{player}",
+            "<light_purple>◆ <gray>Rank <dark_gray>▸ <white>{rank}",
+            "<green>◇ <gray>Balance <dark_gray>▸ <gold>{balance} <gray>{currency}",
+            "{divider}");
+
+    /** Currency id -> player-facing text (vault becomes "money" by default). */
+    private String currencyName(String currencyId) {
+        String id = currencyId == null || currencyId.isBlank() ? "vault" : currencyId;
+        String configured = guiConfig.getString("shop.currency-names." + id.toLowerCase(Locale.ROOT), null);
+        return configured == null || configured.isBlank() ? id : configured;
+    }
+
+    /** Reads a string-or-list value; a missing key uses the defaults, an explicit empty list hides the lines. */
+    private List<String> loreList(String path, List<String> defaults) {
+        if (guiConfig.isList(path)) return guiConfig.getStringList(path);
+        if (guiConfig.isString(path)) return List.of(guiConfig.getString(path, ""));
+        return defaults;
+    }
+
+    /** Resolves PlaceholderAPI placeholders for the viewer when enabled in config.yml and installed. */
+    private String papi(Player player, String line) {
+        if (player == null || !shopSettings.getBoolean("shop.placeholderapi", true)) return line;
+        if (placeholderHook == null) placeholderHook = new PlaceholderHook(plugin);
+        return placeholderHook.apply(player, line);
+    }
+
+    /** Price text such as 15,000.00 (pattern in config.yml: shop.price-format; period decimal separator). */
+    private String formatPrice(BigDecimal value) {
+        try {
+            DecimalFormat formatter = new DecimalFormat(shopSettings.getString("shop.price-format", "#,##0.00"), DecimalFormatSymbols.getInstance(Locale.US));
+            formatter.setRoundingMode(RoundingMode.HALF_UP);
+            return formatter.format(value);
+        } catch (IllegalArgumentException ex) {
+            return format(value);
+        }
+    }
+
+    private String loreDivider() { return guiConfig.getString("shop.lore.divider", LORE_DIVIDER); }
+
+    /**
+     * Renders configured lines. A line that is exactly {block} expands to that block's lines;
+     * {divider} and every other {placeholder} are substituted inside all lines.
+     */
+    private List<Component> renderLore(Player player, List<String> layout, Map<String, List<String>> blocks, Map<String, String> vars) {
+        List<Component> out = new ArrayList<>();
+        String divider = loreDivider();
+        for (String raw : layout) {
+            String trimmed = raw == null ? "" : raw.trim();
+            String blockName = trimmed.length() > 2 && trimmed.startsWith("{") && trimmed.endsWith("}")
+                    ? trimmed.substring(1, trimmed.length() - 1) : null;
+            List<String> block = blockName == null ? null : blocks.get(blockName);
+            if (block != null) {
+                for (String line : block) out.add(ui(papi(player, fillLore(line, vars, divider))));
+            } else if (raw != null) {
+                out.add(ui(papi(player, fillLore(raw, vars, divider))));
+            }
+        }
+        return out;
+    }
+
+    private String fillLore(String line, Map<String, String> vars, String divider) {
+        String result = line.replace("{divider}", divider);
+        for (Map.Entry<String, String> entry : vars.entrySet()) result = result.replace("{" + entry.getKey() + "}", entry.getValue());
+        return result;
+    }
+
+    private static final List<String> DEFAULT_CARD_LINES = List.of("{divider}",
+            "<aqua>❖ <gray>Items <dark_gray>▸ <white>{items}", "{buy}", "{sell}", "{divider}", "<yellow>➜ <white>Click to browse");
+    private static final List<String> DEFAULT_TAB_LINES = List.of("{divider}", "{current}",
+            "<aqua>❖ <gray>Items <dark_gray>▸ <white>{items}", "{divider}", "{action}");
+
+    private List<Component> categoryCardLore(Player player, ShopCategory category) {
+        String base = "shop.lore.categories.main-menu.";
+        List<ShopItem> all = manager.items(category.id());
+        List<ShopItem> buyable = all.stream().filter(ShopItem::canBuy).toList();
+        List<ShopItem> sellable = all.stream().filter(ShopItem::canSell).toList();
+        Map<String, String> vars = new HashMap<>();
+        vars.put("category", category.displayName());
+        vars.put("items", String.valueOf(all.size()));
+        vars.put("buy-range", buyable.isEmpty() ? "—" : priceRange(buyable, true));
+        vars.put("sell-range", sellable.isEmpty() ? "—" : priceRange(sellable, false));
+        Map<String, List<String>> blocks = new HashMap<>();
+        if (buyable.isEmpty() && sellable.isEmpty()) {
+            blocks.put("buy", loreList(base + "no-prices", List.of("<gray>◇ Prices <dark_gray>▸ <dark_gray>Not configured")));
+            blocks.put("sell", List.of());
+        } else {
+            blocks.put("buy", buyable.isEmpty() ? List.of() : loreList(base + "buy", List.of("<green>◆ <gray>Buy <dark_gray>▸ <green>{buy-range}")));
+            blocks.put("sell", sellable.isEmpty() ? List.of() : loreList(base + "sell", List.of("<red>◇ <gray>Sell <dark_gray>▸ <red>{sell-range}")));
+        }
+        return renderLore(player, loreList(base + "lines", DEFAULT_CARD_LINES), blocks, vars);
+    }
+
+    private List<Component> categoryTabLore(Player player, ShopCategory tab, boolean current) {
+        String base = "shop.lore.categories.tab.";
+        Map<String, String> vars = new HashMap<>();
+        vars.put("category", tab.displayName());
+        vars.put("items", String.valueOf(manager.items(tab.id()).size()));
+        Map<String, List<String>> blocks = new HashMap<>();
+        blocks.put("current", current ? loreList(base + "current", List.of("<gold>✦ <yellow>Current category")) : List.of());
+        blocks.put("action", current
+                ? loreList(base + "action-current", List.of("<dark_gray>You are here"))
+                : loreList(base + "action", List.of("<yellow>➜ <white>Switch category")));
+        return renderLore(player, loreList(base + "lines", DEFAULT_TAB_LINES), blocks, vars);
+    }
+
+    private Material materialOr(String name, Material fallback) {
+        Material material = Material.matchMaterial(name == null ? "" : name);
+        return material == null || !material.isItem() ? fallback : material;
+    }
+
+    private String legacyToMiniMessage(String value) {
+        StringBuilder out = new StringBuilder(value.length() + 16);
+        for (int i = 0; i < value.length(); i++) {
+            char marker = value.charAt(i);
+            if ((marker == '&' || marker == '§') && i + 1 < value.length()) {
+                char code = Character.toLowerCase(value.charAt(i + 1));
+                String tag = switch (code) {
+                    case '0' -> "black"; case '1' -> "dark_blue"; case '2' -> "dark_green";
+                    case '3' -> "dark_aqua"; case '4' -> "dark_red"; case '5' -> "dark_purple";
+                    case '6' -> "gold"; case '7' -> "gray"; case '8' -> "dark_gray";
+                    case '9' -> "blue"; case 'a' -> "green"; case 'b' -> "aqua";
+                    case 'c' -> "red"; case 'd' -> "light_purple"; case 'e' -> "yellow"; case 'f' -> "white";
+                    case 'k' -> "obfuscated"; case 'l' -> "bold"; case 'm' -> "strikethrough";
+                    case 'n' -> "underlined"; case 'o' -> "italic"; case 'r' -> "reset";
+                    default -> null;
+                };
+                if (code == 'x' && i + 13 < value.length()) {
+                    StringBuilder hex = new StringBuilder();
+                    boolean valid = true;
+                    for (int j = 0; j < 6; j++) {
+                        int pos = i + 2 + j * 2;
+                        if (value.charAt(pos) != marker || Character.digit(value.charAt(pos + 1), 16) < 0) { valid = false; break; }
+                        hex.append(value.charAt(pos + 1));
+                    }
+                    if (valid) { out.append("<#").append(hex).append('>'); i += 13; continue; }
+                }
+                if (code == '#' && i + 7 < value.length()) {
+                    String hex = value.substring(i + 2, i + 8);
+                    if (hex.matches("[0-9a-fA-F]{6}")) { out.append("<#").append(hex).append('>'); i += 7; continue; }
+                }
+                if (tag != null) { out.append('<').append(tag).append('>'); i++; continue; }
+            }
+            out.append(marker);
+        }
+        return out.toString();
+    }
+
+    /** Parses configured MiniMessage and legacy colors without adding a second palette. */
+    private Component ui(String value) {
+        if (value == null || value.isEmpty()) return Component.empty().decoration(TextDecoration.ITALIC, false);
+        return mini.deserialize(legacyToMiniMessage(value)).decoration(TextDecoration.ITALIC, false);
+    }
+
+    private void setNormalLore(ItemMeta meta) {
+        if (meta.lore() != null) meta.lore(meta.lore().stream()
+                .map(line -> line.decoration(TextDecoration.ITALIC, false)).toList());
+    }
+
+    private String miniEscape(String value) { return value.replace("<", "\\<").replace(">", "\\>"); }
+
+    private ItemStack pane(Material material) {
+        ItemStack item = new ItemStack(material);
+        ItemMeta meta = item.getItemMeta();
+        meta.displayName(Component.text(" "));
+        item.setItemMeta(meta);
+        return item;
+    }
+
+
+    private ItemStack createShopDisplay(Player player, ShopItem item, boolean showClicks) {
+        ItemStack display = item.template();
+        ItemMeta meta = display.getItemMeta();
+        if (meta.displayName() == null || meta.displayName().equals(Component.empty())) {
+            // Plain (non-italic) title; vanilla names are italic by default in menus.
+            meta.displayName(Component.text(prettyMaterial(item.template().getType().name())).decoration(TextDecoration.ITALIC, false));
+        } else {
+            meta.displayName(meta.displayName().decoration(TextDecoration.ITALIC, false));
+        }
+
+        // Shop previews intentionally use compact commerce lore, fully configurable in gui/shop.yml
+        // (shop.lore.shop-items). The purchased template is never modified.
+        String base = "shop.lore.shop-items.";
+        Map<String, String> vars = new HashMap<>();
+        Map<String, List<String>> blocks = new HashMap<>();
+        vars.put("currency", miniEscape(compactCurrency(item.currency(), 12)));
+        if (item.canBuy()) {
+            BigDecimal regular = dynamicPrice(item, true);
+            DiscountOffer offer = activeDiscount(item);
+            vars.put("regular-price", compactText(formatPrice(regular), 18));
+            if (offer != null) {
+                vars.put("buy-price", compactText(formatPrice(applyDiscount(regular, offer)), 18));
+                vars.put("discount-name", offer.displayName());
+                vars.put("discount-percent", offer.percent().stripTrailingZeros().toPlainString());
+                blocks.put("buy", loreList(base + "buy-discounted", List.of(
+                        "<gray>◆ Was <dark_gray>▸ <red><strikethrough>{regular-price} {currency}",
+                        "<green>◆ Now <dark_gray>▸ <white>{buy-price} {currency}",
+                        "<gold>✦ {discount-name} {discount-percent}% off")));
+            } else {
+                vars.put("buy-price", compactText(formatPrice(regular), 18));
+                blocks.put("buy", loreList(base + "buy", List.of("<green>◆ <gray>Buy <dark_gray>▸ <white>{buy-price} {currency}")));
+            }
+        } else blocks.put("buy", loreList(base + "buy-unavailable", List.of("<dark_gray>◆ Buy <dark_gray>▸ <red>Unavailable")));
+
+        if (item.canSell()) {
+            vars.put("sell-price", compactText(formatPrice(dynamicPrice(item, false)), 18));
+            blocks.put("sell", loreList(base + "sell", List.of("<red>◇ <gray>Sell <dark_gray>▸ <white>{sell-price} {currency}")));
+        } else blocks.put("sell", loreList(base + "sell-unavailable", List.of("<dark_gray>◇ Sell <dark_gray>▸ <red>Unavailable")));
+
+        String left = shopSettings.getString("shop.click-actions.left", "buy");
+        String right = shopSettings.getString("shop.click-actions.right", "sell");
+        vars.put("left-action", clickLabel(left, false));
+        vars.put("right-action", clickLabel(right, false));
+        vars.put("shift-left-action", clickLabel(left, true));
+        blocks.put("click-hints", showClicks ? loreList(base + "click-hints", List.of("{divider}",
+                "<yellow>➜ <gray>Left-click <dark_gray>▸ <white>{left-action}",
+                "<yellow>➜ <gray>Right-click <dark_gray>▸ <white>{right-action}",
+                "<yellow>➜ <gray>Shift + Left <dark_gray>▸ <white>{shift-left-action}")) : List.of());
+        List<Component> lore = renderLore(player, loreList(base + "lines", List.of("{divider}", "{buy}", "{sell}", "{click-hints}")), blocks, vars);
+        meta.lore(lore);
+        display.setItemMeta(meta);
+        return display;
+    }
+
+    private String clickLabel(String action, boolean stack) {
+        String suffix = stack ? " ×64" : "";
+        if ("buy".equalsIgnoreCase(action)) return "Buy" + suffix;
+        if ("sell".equalsIgnoreCase(action)) return "Sell" + suffix;
+        return "—";
+    }
+
+    private String compactCurrency(String currency, int max) {
+        return compactText(currencyName(currency), max);
+    }
+
+    private String prettyMaterial(String material) {
+        String[] parts = material.toLowerCase(Locale.ROOT).split("_");
+        StringBuilder result = new StringBuilder();
+        for (String part : parts) {
+            if (result.length() > 0) result.append(' ');
+            if (!part.isEmpty()) result.append(Character.toUpperCase(part.charAt(0))).append(part.substring(1));
+        }
+        return result.toString();
+    }
+
+    private String compactText(String text, int max) {
+        if (text == null) return "";
+        String clean = text.replaceAll("[\r\n]", " ").trim();
+        return clean.length() <= max ? clean : clean.substring(0, Math.max(1, max - 1)) + "…";
+    }
+
+    private DiscountOffer activeDiscount(ShopItem item) {
+        if (discountsConfig == null || !discountsConfig.getBoolean("enabled", false)) return null;
+        String active = Objects.toString(discountsConfig.getString("active", ""), "").trim();
+        if (active.isEmpty()) return null;
+        var offer = discountsConfig.getConfigurationSection("offers." + active);
+        if (offer == null || !offer.getBoolean("enabled", false)) return null;
+
+        double rawPercent = offer.getDouble("percent", 0.0);
+        if (!Double.isFinite(rawPercent) || rawPercent <= 0.0 || rawPercent > 90.0) return null;
+        BigDecimal percent = BigDecimal.valueOf(rawPercent);
+
+        List<String> categories = offer.getStringList("categories");
+        List<String> items = offer.getStringList("items");
+        if (!categories.isEmpty() && categories.stream().noneMatch(value -> value.equalsIgnoreCase(item.categoryId()))) return null;
+        if (!items.isEmpty() && items.stream().noneMatch(value -> value.equalsIgnoreCase(item.id())
+                || value.equalsIgnoreCase(item.categoryId() + ":" + item.id()))) return null;
+
+        LocalDateTime now = LocalDateTime.now();
+        String startsAt = Objects.toString(offer.getString("starts-at", ""), "").trim();
+        String endsAt = Objects.toString(offer.getString("ends-at", ""), "").trim();
+        try {
+            if (!startsAt.isEmpty() && now.isBefore(LocalDateTime.parse(startsAt))) return null;
+            if (!endsAt.isEmpty() && now.isAfter(LocalDateTime.parse(endsAt))) return null;
+        } catch (DateTimeParseException ex) {
+            if (!discountConfigWarningLogged) {
+                plugin.getLogger().warning("Invalid starts-at or ends-at value in shops/discount.yml; discounts are disabled until fixed.");
+                discountConfigWarningLogged = true;
+            }
+            return null;
+        }
+        String name = offer.getString("display-name", "SPECIAL OFFER");
+        return new DiscountOffer(active, name, percent);
+    }
+
+    private BigDecimal applyDiscount(BigDecimal original, DiscountOffer offer) {
+        BigDecimal fraction = offer.percent().divide(BigDecimal.valueOf(100), 6, RoundingMode.HALF_UP);
+        return original.multiply(BigDecimal.ONE.subtract(fraction)).setScale(2, RoundingMode.HALF_UP);
+    }
+
+    private String priceRange(List<ShopItem> source, boolean buying) {
+        Map<String, BigDecimal[]> ranges = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+        for (ShopItem shopItem : source) {
+            BigDecimal price = buying ? shopItem.buyPrice() : shopItem.sellPrice();
+            if (price == null || price.signum() < 0) continue;
+            BigDecimal[] range = ranges.computeIfAbsent(shopItem.currency(), ignored -> new BigDecimal[]{price, price});
+            if (price.compareTo(range[0]) < 0) range[0] = price;
+            if (price.compareTo(range[1]) > 0) range[1] = price;
+        }
+        if (ranges.isEmpty()) return "—";
+        List<String> labels = new ArrayList<>();
+        for (Map.Entry<String, BigDecimal[]> entry : ranges.entrySet()) {
+            BigDecimal[] range = entry.getValue();
+            labels.add(formatPrice(range[0]) + "–" + formatPrice(range[1]) + " " + compactCurrency(entry.getKey(), 8));
+            if (labels.size() == 2) break;
+        }
+        if (ranges.size() > 2) labels.add("+" + (ranges.size() - 2));
+        return String.join(" · ", labels);
+    }
+
+    private void setMainNav(Inventory inventory, OctaMenuHolder holder, int page, int maxPage) {
+        inventory.setItem(SLOT_LEFT_BUTTON, button(Material.BARRIER, "<red>✖ <white>Close"));
+        if (page > 0) {
+            inventory.setItem(SLOT_PREVIOUS, button(Material.SPECTRAL_ARROW, "<aqua>« <white>Previous page"));
+            holder.map(SLOT_PREVIOUS, "@prev");
+        }
+        if (page < maxPage) {
+            inventory.setItem(SLOT_NEXT, button(Material.SPECTRAL_ARROW, "<aqua>Next page <white>»"));
+            holder.map(SLOT_NEXT, "@next");
+        }
+        inventory.setItem(SLOT_RIGHT_BUTTON, button(Material.SPYGLASS, "<aqua>❖ <white>Search", "<gray>Use <yellow>/shop search \\<word>"));
+    }
+
+    private ItemStack button(Material material, String name, String... lore) {
+        ItemStack stack = new ItemStack(material); ItemMeta meta = stack.getItemMeta();
+        meta.displayName(ui(name));
+        if (lore.length > 0) meta.lore(Arrays.stream(lore).map(this::ui).toList());
+        stack.setItemMeta(meta); return stack;
+    }
+
+    public void handleClick(Player player, InventoryClickEvent event, OctaMenuHolder holder) {
+        if (!allowClick(player)) return;
+        int slot = event.getRawSlot(); if (slot < 0 || slot >= event.getView().getTopInventory().getSize()) return;
+        switch (holder.type()) {
+            case SHOP_MAIN -> {
+                if (slot == SLOT_LEFT_BUTTON) { player.closeInventory(); return; }
+                String category = holder.key(slot); if (category == null) return;
+                if (category.equals("@prev")) { openMain(player, Math.max(0, holder.page() - 1)); return; }
+                if (category.equals("@next")) { openMain(player, holder.page() + 1); return; }
+                openMainCategory(player, category);
+            }
+            case SHOP_CATEGORY -> {
+                if (slot == 46) { openMain(player, 0); return; }
+                if (slot == 52) { player.closeInventory(); return; }
+                String key = holder.key(slot); if (key == null) return;
+                if (key.equals("@pageprev")) { openCategory(player, holder.context(), Math.max(0, holder.page() - 1), holder.quantity()); return; }
+                if (key.equals("@pagenext")) { openCategory(player, holder.context(), holder.page() + 1, holder.quantity()); return; }
+                if (key.equals("@tabprev")) { openCategory(player, holder.context(), 0, Math.max(0, holder.quantity() - 1)); return; }
+                if (key.equals("@tabnext")) { openCategory(player, holder.context(), 0, holder.quantity() + 1); return; }
+                if (key.startsWith("@category:")) { openMainCategory(player, key.substring("@category:".length())); return; }
+                String[] parts = key.split(":", 2); if (parts.length != 2) return;
+                ShopItem item = manager.item(parts[0], parts[1]); if (item == null) return;
+                if (event.getClick().isRightClick()) {
+                    String action = shopSettings.getString("shop.click-actions.right", "sell");
+                    if (action.equalsIgnoreCase("sell")) sellFromInventory(player, item.template(), 1, false);
+                    else if (action.equalsIgnoreCase("buy")) buy(player, item, 1);
+                } else if (event.getClick().isLeftClick()) {
+                    String action = shopSettings.getString("shop.click-actions.left", "buy");
+                    if (action.equalsIgnoreCase("buy")) {
+                        if (event.isShiftClick()) buy(player, item, 64); else openQuantity(player, item, 1);
+                    } else if (action.equalsIgnoreCase("sell")) {
+                        sellFromInventory(player, item.template(), event.isShiftClick() ? 64 : 1, false);
+                    }
+                }
+            }
+            case SHOP_QUANTITY -> {
+                String[] parts = holder.context().split(":", 2); if (parts.length != 2) return;
+                ShopItem item = manager.item(parts[0], parts[1]); if (item == null) { player.closeInventory(); return; }
+                if (slot == SLOT_LEFT_BUTTON) { openCategory(player, item.categoryId(), 0); return; }
+                int amount = holder.quantity();
+                if (slot == 20) { openQuantity(player, item, 1); return; }
+                if (slot == 21) { buy(player, item, 1); return; }
+                if (slot == 22) { buy(player, item, 16); return; }
+                if (slot == 23) { buy(player, item, 32); return; }
+                if (slot == 24) { buy(player, item, 64); return; }
+                if (slot == 29) { openQuantity(player, item, Math.max(1, amount - 1)); return; }
+                if (slot == 33) { openQuantity(player, item, Math.min(2304, amount + 1)); return; }
+                if (slot == 31) { buy(player, item, amount); return; }
+                if (slot == SLOT_RIGHT_BUTTON) player.closeInventory();
+            }
+            default -> { }
+        }
+    }
+
+    private void openQuantity(Player player, ShopItem item, int quantity) {
+        OctaMenuHolder holder = new OctaMenuHolder(player.getUniqueId(), MenuType.SHOP_QUANTITY, item.categoryId() + ":" + item.id(), 0, quantity, -1);
+        Inventory inv = Bukkit.createInventory(holder, 54, ui(guiConfig.getString("shop.title", "<dark_green>OCTA MARKET") + " <gray>/ <white>Quantity")); holder.attach(inv);
+        paintShopBackground(inv);
+        inv.setItem(4, ornament(Material.NETHER_STAR, "<gold>✦ <white>PURCHASE DETAILS <gold>✦",
+                "<gray>Choose a quantity", "<dark_gray>━━━━━━━━━━━━━━━━━━"));
+        inv.setItem(SLOT_INFO, playerInfoItem(player));
+        inv.setItem(20, createShopDisplay(player, item, false));
+        inv.setItem(21, button(Material.PAPER, "<green>Buy 1"));
+        inv.setItem(22, button(Material.PAPER, "<green>Buy 16"));
+        inv.setItem(23, button(Material.PAPER, "<green>Buy 32"));
+        inv.setItem(24, button(Material.PAPER, "<green>Buy 64"));
+        inv.setItem(29, button(Material.RED_DYE, "<red>- 1"));
+        inv.setItem(30, button(Material.NAME_TAG, "<yellow>Selected: " + quantity));
+        inv.setItem(33, button(Material.LIME_DYE, "<green>+ 1"));
+        BigDecimal total = purchaseUnitPrice(item).multiply(BigDecimal.valueOf(quantity)).setScale(2, RoundingMode.HALF_UP);
+        inv.setItem(31, button(Material.EMERALD, "<green>Confirm purchase", "<gray>Total: " + formatPrice(total) + " " + miniEscape(currencyName(item.currency()))));
+        inv.setItem(SLOT_LEFT_BUTTON, button(Material.ARROW, "<yellow>« <white>Back")); inv.setItem(SLOT_RIGHT_BUTTON, button(Material.BARRIER, "<red>✖ <white>Close"));
+        player.openInventory(inv);
+    }
+
+    private void buy(Player player, ShopItem item, int amount) {
+        if (!item.canBuy()) { lang.send(player, "cannot-buy"); return; }
+        ItemStack purchase = item.template(); purchase.setAmount(amount);
+        if (!canFit(player.getInventory(), purchase)) { lang.send(player, "inventory-full"); play(player, "error"); return; }
+        BigDecimal total = purchaseUnitPrice(item).multiply(BigDecimal.valueOf(amount)).setScale(2, RoundingMode.HALF_UP);
+        if (!Double.isFinite(total.doubleValue()) || total.signum() < 0) { lang.send(player, "error"); return; }
+        CurrencyProvider provider = currencies.get(item.currency());
+        if (total.signum() > 0 && provider == null) { lang.send(player, "currency-unavailable", Map.of("currency", currencyName(item.currency()))); return; }
+        ShopTransactionEvent transaction = new ShopTransactionEvent(player, purchase, amount, total, item.currency(), true);
+        Bukkit.getPluginManager().callEvent(transaction);
+        if (transaction.isCancelled()) return;
+        if (total.signum() > 0 && !provider.withdraw(player, total.doubleValue())) {
+            lang.send(player, "insufficient-funds"); play(player, "error"); return;
+        }
+        Map<Integer, ItemStack> leftovers = player.getInventory().addItem(purchase);
+        if (!leftovers.isEmpty()) {
+            if (total.signum() > 0) provider.deposit(player, total.doubleValue());
+            leftovers.values().forEach(stack -> player.getWorld().dropItemNaturally(player.getLocation(), stack));
+            lang.send(player, "inventory-full"); return;
+        }
+        updateDynamicPrice(item, true);
+        lang.send(player, "purchase-success", Map.of("amount", amount, "item", item.displayName(), "price", formatPrice(total), "currency", currencyName(item.currency())));
+        play(player, "success"); logTransaction(player.getName() + " BUY " + amount + "x " + item.id() + " " + total + " " + item.currency());
+        player.closeInventory();
+    }
+
+    private boolean canFit(PlayerInventory inventory, ItemStack item) {
+        int remaining = item.getAmount();
+        for (ItemStack current : inventory.getStorageContents()) {
+            if (current == null || current.getType().isAir()) remaining -= item.getMaxStackSize();
+            else if (current.isSimilar(item)) remaining -= Math.max(0, current.getMaxStackSize() - current.getAmount());
+            if (remaining <= 0) return true;
+        }
+        return remaining <= 0;
+    }
+
+    private void sellFromInventory(Player player, ItemStack match, int requested, boolean exactHand) {
+        if (match == null || match.getType().isAir()) { lang.send(player, "cannot-sell"); return; }
+        ShopItem item = manager.match(match);
+        if (item == null || !item.canSell()) { lang.send(player, "cannot-sell"); return; }
+        CurrencyProvider provider = currencies.get(item.currency());
+        int remaining = requested, sold = 0; BigDecimal total = BigDecimal.ZERO;
+        PlayerInventory inventory = player.getInventory();
+        int firstSlot = exactHand ? inventory.getHeldItemSlot() : 0;
+        int lastSlot = exactHand ? firstSlot + 1 : inventory.getStorageContents().length;
+        for (int i = firstSlot; i < lastSlot && remaining > 0; i++) {
+            ItemStack current = inventory.getItem(i);
+            if (current == null || current.getType().isAir() || !current.isSimilar(match)) continue;
+            int take = Math.min(current.getAmount(), remaining);
+            if (isDailyLimitReached(player, item, take)) break;
+            BigDecimal value = dynamicPrice(item, false).multiply(BigDecimal.valueOf(take)).multiply(sellMultiplier(player)).setScale(2, RoundingMode.HALF_UP);
+            ShopTransactionEvent transaction = new ShopTransactionEvent(player, current.clone(), take, value, item.currency(), false);
+            Bukkit.getPluginManager().callEvent(transaction);
+            if (transaction.isCancelled() || value.signum() < 0 || !Double.isFinite(value.doubleValue())
+                    || (value.signum() > 0 && (provider == null || !provider.deposit(player, value.doubleValue())))) continue;
+            current.setAmount(current.getAmount() - take); if (current.getAmount() <= 0) inventory.setItem(i, null);
+            addDailyUsage(player, item, take); updateDynamicPrice(item, false); sold += take; remaining -= take; total = total.add(value);
+        }
+        if (sold <= 0) { lang.send(player, "cannot-sell"); return; }
+        lang.send(player, "sell-success", Map.of("amount", sold, "item", item.displayName(), "price", formatPrice(total), "currency", currencyName(item.currency())));
+        play(player, "success"); logTransaction(player.getName() + " SELL " + sold + "x " + item.id() + " " + total + " " + item.currency());
+    }
+
+    private void sellInventory(Player player) {
+        Map<String, BigDecimal> totals = new LinkedHashMap<>(); Map<String, Integer> counts = new LinkedHashMap<>();
+        PlayerInventory inventory = player.getInventory();
+        for (int i = 0; i < inventory.getStorageContents().length; i++) {
+            ItemStack stack = inventory.getItem(i); if (stack == null || stack.getType().isAir()) continue;
+            ShopItem item = manager.match(stack); if (item == null || !item.canSell()) continue;
+            CurrencyProvider provider = currencies.get(item.currency());
+            int amount = stack.getAmount(); if (isDailyLimitReached(player, item, amount)) continue;
+            BigDecimal value = dynamicPrice(item, false).multiply(BigDecimal.valueOf(amount)).multiply(sellMultiplier(player)).setScale(2, RoundingMode.HALF_UP);
+            ShopTransactionEvent transaction = new ShopTransactionEvent(player, stack.clone(), amount, value, item.currency(), false);
+            Bukkit.getPluginManager().callEvent(transaction);
+            if (transaction.isCancelled() || value.signum() < 0 || !Double.isFinite(value.doubleValue())
+                    || (value.signum() > 0 && (provider == null || !provider.deposit(player, value.doubleValue())))) continue;
+            inventory.setItem(i, null); addDailyUsage(player, item, amount); updateDynamicPrice(item, false);
+            totals.merge(item.currency(), value, BigDecimal::add); counts.merge(item.currency(), amount, Integer::sum);
+            logTransaction(player.getName() + " SELL " + amount + "x " + item.id() + " " + value + " " + item.currency());
+        }
+        sendSummaries(player, totals, counts);
+    }
+
+    private void openSellGui(Player player) {
+        OctaMenuHolder holder = new OctaMenuHolder(player.getUniqueId(), MenuType.SELL, "", 0, 0, -1);
+        String title = guiConfig.getString("sell.title", "<dark_green>Sell Items");
+        Inventory inv = Bukkit.createInventory(holder, 54, ui(title)); holder.attach(inv);
+        lang.send(player, "sellgui-open"); player.openInventory(inv);
+    }
+
+    public void finishSellGui(Player player, Inventory inventory) {
+        Map<String, BigDecimal> totals = new LinkedHashMap<>(); Map<String, Integer> counts = new LinkedHashMap<>();
+        for (int slot = 0; slot < inventory.getSize(); slot++) {
+            ItemStack stack = inventory.getItem(slot); if (stack == null || stack.getType().isAir()) continue;
+            ShopItem item = manager.match(stack); CurrencyProvider provider = item == null || !item.canSell() ? null : currencies.get(item.currency());
+            boolean sold = false;
+            if (item != null && item.canSell() && !isDailyLimitReached(player, item, stack.getAmount())) {
+                BigDecimal value = dynamicPrice(item, false).multiply(BigDecimal.valueOf(stack.getAmount())).multiply(sellMultiplier(player)).setScale(2, RoundingMode.HALF_UP);
+                ShopTransactionEvent transaction = new ShopTransactionEvent(player, stack.clone(), stack.getAmount(), value, item.currency(), false);
+                Bukkit.getPluginManager().callEvent(transaction);
+                if (!transaction.isCancelled() && value.signum() >= 0 && Double.isFinite(value.doubleValue())
+                        && (value.signum() == 0 || (provider != null && provider.deposit(player, value.doubleValue())))) {
+                    totals.merge(item.currency(), value, BigDecimal::add); counts.merge(item.currency(), stack.getAmount(), Integer::sum);
+                    addDailyUsage(player, item, stack.getAmount()); updateDynamicPrice(item, false); sold = true;
+                    logTransaction(player.getName() + " SELLGUI " + stack.getAmount() + "x " + item.id() + " " + value + " " + item.currency());
+                }
+            }
+            if (!sold) giveOrDrop(player, stack.clone());
+            inventory.setItem(slot, null);
+        }
+        if (!totals.isEmpty()) sendSummaries(player, totals, counts);
+    }
+
+    private void giveOrDrop(Player player, ItemStack item) {
+        Map<Integer, ItemStack> leftovers = player.getInventory().addItem(item);
+        leftovers.values().forEach(stack -> player.getWorld().dropItemNaturally(player.getLocation(), stack));
+    }
+
+    private void sendSummaries(Player player, Map<String, BigDecimal> totals, Map<String, Integer> counts) {
+        if (totals.isEmpty()) { lang.send(player, "cannot-sell"); return; }
+        for (String currency : totals.keySet()) lang.send(player, "sell-summary", Map.of("items", counts.get(currency), "total", formatPrice(totals.get(currency)), "currency", currencyName(currency)));
+        play(player, "success");
+    }
+
+    private BigDecimal purchaseUnitPrice(ShopItem item) {
+        BigDecimal price = dynamicPrice(item, true);
+        DiscountOffer offer = activeDiscount(item);
+        return offer == null ? price : applyDiscount(price, offer);
+    }
+
+    private BigDecimal dynamicPrice(ShopItem item, boolean buying) {
+        BigDecimal base = buying ? item.buyPrice() : item.sellPrice();
+        if (!shopSettings.getBoolean("shop.dynamic-price.enabled", false)) return base;
+        String key = item.categoryId() + ":" + item.id();
+        PriceState state = dynamicPrices.getOrDefault(key, new PriceState(BigDecimal.ONE, System.currentTimeMillis()));
+        BigDecimal factor = recover(state);
+        return base.multiply(factor).setScale(2, RoundingMode.HALF_UP);
+    }
+
+    private BigDecimal recover(PriceState state) {
+        long now = System.currentTimeMillis();
+        double recovery = Math.max(0, shopSettings.getDouble("shop.dynamic-price.recovery-per-hour", 0.02));
+        double hours = Math.max(0, now - state.updatedAt()) / 3_600_000.0;
+        BigDecimal factor = state.multiplier();
+        if (factor.compareTo(BigDecimal.ONE) > 0) factor = factor.subtract(BigDecimal.valueOf(recovery * hours)).max(BigDecimal.ONE);
+        else if (factor.compareTo(BigDecimal.ONE) < 0) factor = factor.add(BigDecimal.valueOf(recovery * hours)).min(BigDecimal.ONE);
+        return factor;
+    }
+
+    private void updateDynamicPrice(ShopItem item, boolean purchasedFromShop) {
+        if (!shopSettings.getBoolean("shop.dynamic-price.enabled", false)) return;
+        String key = item.categoryId() + ":" + item.id();
+        PriceState old = dynamicPrices.getOrDefault(key, new PriceState(BigDecimal.ONE, System.currentTimeMillis()));
+        BigDecimal factor = recover(old);
+        BigDecimal delta = BigDecimal.valueOf(Math.max(0, shopSettings.getDouble("shop.dynamic-price.fluctuation-percent", 2.0)) / 100.0);
+        factor = purchasedFromShop ? factor.add(delta) : factor.subtract(delta);
+        BigDecimal min = BigDecimal.valueOf(shopSettings.getDouble("shop.dynamic-price.min-multiplier", 0.75));
+        BigDecimal max = BigDecimal.valueOf(shopSettings.getDouble("shop.dynamic-price.max-multiplier", 1.50));
+        factor = factor.max(min).min(max);
+        dynamicPrices.put(key, new PriceState(factor, System.currentTimeMillis()));
+    }
+
+    private BigDecimal sellMultiplier(Player player) {
+        if (!shopSettings.getBoolean("shop.sell-multiplier.enabled", true)) return BigDecimal.ONE;
+        BigDecimal highest = BigDecimal.ONE;
+        for (var permission : player.getEffectivePermissions()) {
+            String node = permission.getPermission().toLowerCase(Locale.ROOT);
+            String prefix = "octaeconomy.sell.multiplier.";
+            if (!permission.getValue() || !node.startsWith(prefix)) continue;
+            try { BigDecimal value = new BigDecimal(node.substring(prefix.length())); if (value.compareTo(highest) > 0 && value.compareTo(BigDecimal.valueOf(100)) <= 0) highest = value; }
+            catch (NumberFormatException ignored) { }
+        }
+        return highest;
+    }
+
+    private boolean isDailyLimitReached(Player player, ShopItem item, int amount) {
+        if (!shopSettings.getBoolean("shop.daily-limit.enabled", false)) return false;
+        int limit = shopSettings.getInt("shop.daily-limit.items." + item.id(), shopSettings.getInt("shop.daily-limit.default-amount", 0));
+        if (limit <= 0) return false;
+        Map<String, DailyUsage> user = dailyUsage.getOrDefault(player.getUniqueId(), Map.of());
+        DailyUsage usage = user.get(item.categoryId() + ":" + item.id());
+        int used = usage == null || !usage.date().equals(LocalDate.now()) ? 0 : usage.amount();
+        return used + amount > limit;
+    }
+
+    private void addDailyUsage(Player player, ShopItem item, int amount) {
+        if (!shopSettings.getBoolean("shop.daily-limit.enabled", false)) return;
+        dailyUsage.computeIfAbsent(player.getUniqueId(), ignored -> new ConcurrentHashMap<>()).compute(item.categoryId() + ":" + item.id(), (key, old) -> {
+            int used = old == null || !old.date().equals(LocalDate.now()) ? 0 : old.amount(); return new DailyUsage(LocalDate.now(), used + amount);
+        });
+    }
+
+    private boolean allowClick(Player player) {
+        long now = System.currentTimeMillis(); Long previous = clickDebounce.put(player.getUniqueId(), now);
+        return previous == null || now - previous > 120;
+    }
+    private String format(BigDecimal value) { return value.setScale(2, RoundingMode.HALF_UP).stripTrailingZeros().toPlainString(); }
+    private void play(Player player, String key) {
+        if (!plugin.getConfig().getBoolean("sound.enabled", true)) return;
+        String name = plugin.getConfig().getString("sound." + key, key.equals("success") ? "ENTITY_EXPERIENCE_ORB_PICKUP" : "UI_BUTTON_CLICK");
+        try { player.playSound(player.getLocation(), Sound.valueOf(name.toUpperCase(Locale.ROOT)), 0.7f, 1.2f); } catch (IllegalArgumentException ignored) { }
+    }
+    private void logTransaction(String line) {
+        if (!plugin.getConfig().getBoolean("transaction-log.enabled", false)) return;
+        scheduler.async(() -> {
+            try {
+                File dir = new File(plugin.getDataFolder(), "logs"); dir.mkdirs();
+                File file = new File(dir, "transactions-" + LocalDate.now() + ".log");
+                java.nio.file.Files.writeString(file.toPath(), System.currentTimeMillis() + " " + line + System.lineSeparator(), java.nio.file.StandardOpenOption.CREATE, java.nio.file.StandardOpenOption.APPEND);
+                File[] old = dir.listFiles((d, n) -> n.startsWith("transactions-") && n.endsWith(".log"));
+                if (old != null && old.length > 7) { Arrays.sort(old, Comparator.comparingLong(File::lastModified).reversed()); for (int i = 7; i < old.length; i++) old[i].delete(); }
+            } catch (Exception ex) { plugin.getLogger().log(Level.WARNING, "Could not write transaction log", ex); }
+        });
+    }
+}

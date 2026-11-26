@@ -1,0 +1,82 @@
+config-version: 7
+language: en
+debug: false
+donation-link: https://saweria.co/AlvranNPC
+database:
+  type: sqlite
+  sqlite-file: data/database.db
+  mysql:
+    host: 127.0.0.1
+    port: 3306
+    database: octaeconomy
+    username: root
+    password: change-me
+    use-ssl: false
+economy:
+  default-currency: vault
+  currency-display:
+    vault: $
+sound:
+  enabled: true
+  click: UI_BUTTON_CLICK
+  success: ENTITY_EXPERIENCE_ORB_PICKUP
+  error: BLOCK_NOTE_BLOCK_BASS
+transaction-log:
+  enabled: false
+  max-files: 7
+# Shop behaviour (formerly shops/settings.yml). Category files live in shops/category/,
+# the seasonal sale in shops/discount.yml and every Shop/Sell GUI text in gui/shop.yml.
+shop:
+  click-actions:
+    left: buy
+    right: sell
+  sorting:
+    # grouped: related items stay together (all oak items, all copper items, all diamond tools...)
+    # alphabetical: plain A-Z by item id    file: keep the order of the category YAML
+    mode: grouped
+    # Categories that always stay alphabetical, even when mode is grouped.
+    alphabetical-categories:
+      - spawners
+      - mobs_drop
+      - redstone
+  dynamic-price:
+    enabled: false
+    fluctuation-percent: 2.0
+    min-multiplier: 0.75
+    max-multiplier: 1.5
+    recovery-per-hour: 0.02
+  daily-limit:
+    enabled: false
+    default-amount: 0
+  sell-multiplier:
+    enabled: true
+  # Price text in lore, the confirm menu and chat. Java DecimalFormat pattern, period decimal separator.
+  price-format: "#,##0.00"
+  # Resolve PlaceholderAPI placeholders (%player_name% ...) in the lore of gui/shop.yml when PlaceholderAPI is installed.
+  placeholderapi: true
+  # Page layout per category. Each section starts on a new page. "rows" puts one item type per row and one
+  # material per column (7 columns per page row). Patterns: * wildcards on the item id, or family:<name>.
+  # Items no section accepts follow in a final section. Remove a category here to use plain grouped order.
+  layouts:
+    vanilla_tools:
+      sections:
+        - name: Armor
+          layout: rows
+          match: ["*_helmet", "*_chestplate", "*_leggings", "*_boots"]
+          rows: ["*_helmet", "*_chestplate", "*_leggings", "*_boots"]
+          columns: [leather, chainmail, copper, iron, golden, diamond, netherite]
+        - name: Tools
+          layout: rows
+          match: ["*_sword", "*_pickaxe", "*_hoe", "*_axe", "*_shovel"]
+          rows: ["*_sword", "*_pickaxe", "*_hoe", "*_axe", "*_shovel"]
+          columns: [wooden, stone, copper, iron, golden, diamond, netherite]
+        - name: Other
+          match: ["*"]
+    blocks:
+      sections:
+        - name: Wood
+          match: ["family:acacia", "family:azalea", "family:bamboo", "family:birch", "family:cherry", "family:crimson", "family:dark_oak", "family:flowering_azalea", "family:jungle", "family:mangrove", "family:oak", "family:pale_oak", "family:spruce", "family:warped"]
+        - name: Stone
+          match: ["family:andesite", "family:basalt", "family:blackstone", "family:calcite", "family:cobblestone", "family:deepslate", "family:diorite", "family:dripstone", "family:end_stone", "family:granite", "family:prismarine", "family:red_sandstone", "family:sandstone", "family:stone", "family:tuff", "gilded_blackstone", "reinforced_deepslate"]
+        - name: Other
+          match: ["*"]

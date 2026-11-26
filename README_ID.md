@@ -331,6 +331,14 @@ OctaEconomy **100% gratis**. Penjualan ulang, akses paywall, akses yang mensyara
 - MMOItems, ExcellentEconomy, dan SmartSpawner merupakan integrasi runtime opsional.
 
 
+## Pembaruan v0.0.3-2026
+- Istilah money, urutan item berkelompok, tata letak file baru, dan lore yang dapat diedit (lihat changelog).
+- **Format harga:** harga tampil `15,000.00` di seluruh Shop (`shop.price-format`).
+- **PlaceholderAPI:** pasang PlaceholderAPI dan pakai `%placeholder%` di baris lore `gui/shop.yml` (kategori, item, dan kartu pemain). Bersifat opsional; nonaktifkan dengan `shop.placeholderapi: false`.
+- **Layout Tools:** halaman 1 berisi armor dengan satu jenis per baris dan satu material per kolom (leather sampai netherite), halaman berikutnya berisi pedang, beliung, cangkul, kapak, dan sekop dengan cara yang sama, lalu sisanya.
+- **Layout Blocks:** halaman awal berisi jenis kayu (azalea, oak, ...), lalu jenis batu, lalu semua blok lain.
+- Layout kustom: ubah `shop.layouts.<kategori>.sections` di `config.yml` (pola seperti `*_helmet` atau `family:oak`, `layout: rows` atau flow).
+
 ## Pembaruan v0.0.3-2026-DEV-8
 - **Menu roda Roulette:** menekan SPIN kini menarik taruhan dan membuka GUI roda tersendiri. Cincin 26 kantong berwarna (urutan roda Eropa) berputar melewati penunjuk tetap di tengah atas, melambat, lalu berhenti pada hasil yang sudah ditentukan, lengkap dengan suara tik dan pengumuman menang/kalah sebelum kembali ke meja. Atur di `casino/animation/roulette.yml` (`laps`, `start-interval-ticks`, `maximum-interval-ticks`, `slowdown-steps`, `result-hold-ticks`).
 - Menutup menu roda saat berputar kini langsung menampilkan hasil yang sudah terkunci, bukan mengembalikan taruhan, sehingga putaran tidak bisa dibatalkan ketika terlihat kalah. Disconnect dan shutdown plugin tetap mengembalikan taruhan.

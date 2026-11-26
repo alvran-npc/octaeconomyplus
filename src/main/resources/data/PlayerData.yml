@@ -1,0 +1,3 @@
+# Persistent per-player metadata. Casino 21+ confirmation is session-only and is not stored here.
+schema-version: 1
+players: {}

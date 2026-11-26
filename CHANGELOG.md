@@ -10,6 +10,9 @@ Fix update: no new gameplay, tidier files and editable texts.
 - `/octaeconomy reload` now reloads `config.yml` after file migration so moved settings apply immediately.
 
 ### Added
+- Prices are shown as `15,000.00` (period decimal, thousands separators) in item lore, category ranges, the confirm menu and chat. Pattern: `shop.price-format` in `config.yml`.
+- Optional PlaceholderAPI support: `%placeholders%` inside the `gui/shop.yml` lore are resolved per player (soft dependency, no hard requirement; toggle with `shop.placeholderapi`).
+- Section layouts per category (`shop.layouts` in `config.yml`). Tools: page 1 armor (one piece type per row, one material per column), then swords, pickaxes, hoes, axes and shovels on the next page(s) in the same row layout, then everything else. Blocks: wood types first (azalea, oak...), then stone types, then other blocks.
 - Editable Shop lore: `gui/shop.yml` `shop.lore.categories.main-menu`, `shop.lore.categories.tab`, `shop.lore.shop-items` and `shop.player-info` with placeholders and block lines (`{buy}`, `{sell}`, `{click-hints}`). Missing keys fall back to built-in defaults.
 - `shop.lore.divider` and `shop.currency-names` in `gui/shop.yml`.
 
